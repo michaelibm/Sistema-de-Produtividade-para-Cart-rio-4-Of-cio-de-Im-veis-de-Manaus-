@@ -10,6 +10,8 @@ COPY package*.json ./
 # Instala dependências
 RUN npm ci --only=production
 
+
+
 # Copia código fonte
 COPY . .
 

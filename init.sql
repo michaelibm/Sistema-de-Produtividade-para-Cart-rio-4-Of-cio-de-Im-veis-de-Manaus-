@@ -255,12 +255,16 @@ CREATE TRIGGER update_protocolo_notas_updated_at BEFORE UPDATE ON public.protoco
 -- ============================================================
 
 -- Inserir usuário administrador padrão
--- Senha: admin123 (você deve hashear com bcrypt no backend)
+-- Usuário inicial (APENAS DESENVOLVIMENTO)
+-- Email: admin@cartorio.com
+-- Senha: admin123
+-- A senha abaixo já está com hash bcrypt válido.
+-- IMPORTANTE: em produção, altere a senha imediatamente ou remova este seed.
 INSERT INTO public.usuarios (nome, email, senha, cargo, setor) 
 VALUES (
     'Administrador',
     'admin@cartorio.com',
-    '$2b$10$rI3pJQjBDKQxQz0L0fhV5OL.YJ5YbJLxYQZvMxJQxQz0L0fhV5OL.',
+    '$2b$10$eQAJxpDO.jiVkMWtEbc.5Oy.u1aJdv868tTInrBBz1VJ.fEN6r8YO',
     'Supervisor',
     'TI'
 ) ON CONFLICT (email) DO NOTHING;

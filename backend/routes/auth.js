@@ -23,6 +23,10 @@ router.post('/login', async (req, res) => {
     }
 
     const usuario = result.rows[0];
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'JWT_SECRET não configurado no servidor' });
+    }
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
 
     if (!senhaValida) {
@@ -31,7 +35,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, cargo: usuario.cargo },
-      process.env.JWT_SECRET || 'seu-secret-aqui-mude-em-producao',
+      process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
 
