@@ -1,0 +1,44 @@
+# Dependências
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Testes
+coverage
+.nyc_output
+test
+
+# Ambiente
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Uploads (se houver)
+uploads/*
+!uploads/.gitkeep

@@ -1,0 +1,57 @@
+/* 
+  ATENÇÃO: Adicione este CSS ao seu App.css ou arquivo de estilos global
+  para que o conteúdo principal se ajuste quando o sidebar recolher
+*/
+
+/* Ajuste do conteúdo principal */
+.main-content {
+  margin-left: 280px; /* Largura do sidebar expandido */
+  transition: margin-left 0.3s ease;
+  padding: 2rem;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Quando o sidebar está recolhido, ajusta a margem */
+.main-content.sidebar-collapsed {
+  margin-left: 80px; /* Largura do sidebar recolhido */
+}
+
+/* Responsivo para mobile */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
+
+/* 
+  EXEMPLO DE USO NO SEU APP.JSX:
+  
+  function App() {
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    
+    return (
+      <>
+        <Sidebar 
+          usuario={usuario} 
+          onLogout={handleLogout}
+          onToggle={setSidebarCollapsed}
+        />
+        
+        <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+          {/* Seu conteúdo aqui *\/}
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/protocolos" element={<Protocolos />} />
+            {/* ... outras rotas *\/}
+          </Routes>
+        </div>
+      </>
+    );
+  }
+*/
