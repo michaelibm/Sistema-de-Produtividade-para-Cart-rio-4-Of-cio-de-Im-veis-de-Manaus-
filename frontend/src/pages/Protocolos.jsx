@@ -104,7 +104,7 @@ export default function Protocolos({ usuario }) {
         getProtocolos({ status: fStatus || undefined, responsavel_id: fResp || undefined }),
         getServicos(),
         getFuncionarios(),
-        fetch('http://localhost:5000/api/status', {
+        fetch(`${API_URL}/status`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => r.json())
       ]);
@@ -325,7 +325,7 @@ export default function Protocolos({ usuario }) {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/alertas/verificar-vencimentos', {
+      const response = await fetch(`${API_URL}/alertas/verificar-vencimentos`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

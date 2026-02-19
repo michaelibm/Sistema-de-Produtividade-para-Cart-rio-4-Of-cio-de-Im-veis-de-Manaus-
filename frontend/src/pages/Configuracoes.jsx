@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getFeriados, createFeriado, deleteFeriado } from '../services/api';
+import { API_URL } from "../services/api";
+
 
 // Cores disponíveis para os badges
 const CORES_BADGE = [
@@ -31,7 +33,7 @@ function Configuracoes() {
     try {
       const [feriadosData, statusData] = await Promise.all([
         getFeriados(),
-        fetch('http://localhost:5000/api/status', {
+        fetch(`${API_URL}/status`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }).then(r => r.json())
       ]);
@@ -115,7 +117,7 @@ function Configuracoes() {
     setErro('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/status/${id}`, {
+      const response = await fetch(`${API_URL}/status/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
