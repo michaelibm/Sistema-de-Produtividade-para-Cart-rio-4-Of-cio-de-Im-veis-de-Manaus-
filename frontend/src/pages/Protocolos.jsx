@@ -31,6 +31,20 @@ const statusBadgeClass = (s) => {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+// Navega para o próximo campo ao pressionar Enter
+const handleEnterKey = (e) => {
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit') {
+    e.preventDefault();
+    const form = e.target.closest('form');
+    if (!form) return;
+    const fields = Array.from(form.querySelectorAll('input:not([disabled]), select:not([disabled]), textarea:not([disabled])'));
+    const idx = fields.indexOf(e.target);
+    if (idx >= 0 && idx < fields.length - 1) {
+      fields[idx + 1].focus();
+    }
+  }
+};
+
 const formatDateTime = (dt) => {
   if (!dt) return '';
   const d = new Date(dt);
@@ -654,7 +668,7 @@ export default function Protocolos({ usuario }) {
             )}
 
             {/* Botão Alertas - Supervisor */}
-            {usuario?.cargo === 'Supervisor' && (
+            {(usuario?.cargo === 'Supervisor' || usuario?.cargo === 'Coordenador') && (
               <button
                 className="btn-moderno btn-warning-moderno"
                 onClick={enviarAlertasManual}
@@ -722,7 +736,9 @@ export default function Protocolos({ usuario }) {
                         </>
                       )}
                       <button className="btn-action btn-action-edit" onClick={() => abrirModalNotas(p)} title="Notas">📝</button>
+                      {usuario?.cargo !== 'Registrador' && (
                       <button className="btn-action btn-action-delete" onClick={() => excluir(p.id)} title="Excluir">🗑️</button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -738,7 +754,7 @@ export default function Protocolos({ usuario }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{editId ? 'Editar Protocolo' : 'Novo Protocolo'}</h2>
             
-            <form onSubmit={salvar}>
+            <form onSubmit={salvar} onKeyDown={handleEnterKey}>
               <div className="form-group">
                 <label htmlFor="numero">Número</label>
                 <input
@@ -748,7 +764,7 @@ export default function Protocolos({ usuario }) {
                   value={form.numero}
                   onChange={(e) => setForm({ ...form, numero: e.target.value })}
                   placeholder="Ex: 2026-000123"
-                  disabled={!!editId}
+                  disabled={!!editId && usuario?.cargo === 'Registrador'}
                   required
                 />
               </div>
@@ -760,7 +776,7 @@ export default function Protocolos({ usuario }) {
                   className="form-select"
                   value={form.servico_id}
                   onChange={(e) => setForm({ ...form, servico_id: e.target.value })}
-                  disabled={!!editId}
+                  disabled={!!editId && usuario?.cargo === 'Registrador'}
                   required
                 >
                   <option value="">Selecione...</option>
@@ -780,7 +796,7 @@ export default function Protocolos({ usuario }) {
                   className="form-input"
                   value={form.data_entrada}
                   onChange={(e) => setForm({ ...form, data_entrada: e.target.value })}
-                  disabled={!!editId}
+                  disabled={!!editId && usuario?.cargo === 'Registrador'}
                   required
                 />
               </div>

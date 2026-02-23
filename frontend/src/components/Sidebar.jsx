@@ -15,10 +15,10 @@ function Sidebar({ usuario, onLogout, onToggle }) {
 
   // Define itens do menu com permissões
   const menuItems = [
-    { path: '/', icon: '📊', label: 'Dashboard', color: '#3b82f6', roles: ['Supervisor', 'Escrevente', 'Coordenador', 'Auxiliar', 'Registrador'] },
-    { path: '/protocolos', icon: '📋', label: 'Protocolos', color: '#8b5cf6', roles: ['Supervisor', 'Escrevente', 'Coordenador', 'Auxiliar', 'Registrador'] },
-    { path: '/servicos', icon: '⚙️', label: 'Tipos de Serviço', color: '#10b981', roles: ['Supervisor', 'Escrevente', 'Coordenador'] },
-    { path: '/relatorios', icon: '📈', label: 'Relatórios', color: '#06b6d4', roles: ['Supervisor', 'Escrevente', 'Coordenador'] },
+    { path: '/', icon: '📊', label: 'Dashboard', color: '#3b82f6', roles: ['Supervisor', 'Coordenador', 'Registrador'] },
+    { path: '/protocolos', icon: '📋', label: 'Protocolos', color: '#8b5cf6', roles: ['Supervisor', 'Coordenador', 'Registrador'] },
+    { path: '/servicos', icon: '⚙️', label: 'Tipos de Serviço', color: '#10b981', roles: ['Supervisor', 'Coordenador'] },
+    { path: '/relatorios', icon: '📈', label: 'Relatórios', color: '#06b6d4', roles: ['Supervisor', 'Coordenador'] },
     { path: '/funcionarios', icon: '👥', label: 'Funcionários', color: '#f59e0b', roles: ['Supervisor'] },
     { path: '/configuracoes', icon: '🔧', label: 'Configurações', color: '#ec4899', roles: ['Supervisor'] },
   ];
@@ -308,9 +308,7 @@ function Sidebar({ usuario, onLogout, onToggle }) {
                 color: '#64748b',
                 fontWeight: '500'
               }}>
-                {usuario?.cargo === 'Auxiliar' ? 'Registrador' : 
-                 usuario?.cargo === 'Escrevente' ? 'Coordenador' : 
-                 usuario?.cargo || 'Supervisor'}
+                {usuario?.cargo || 'Supervisor'}
               </div>
             </div>
           )}
