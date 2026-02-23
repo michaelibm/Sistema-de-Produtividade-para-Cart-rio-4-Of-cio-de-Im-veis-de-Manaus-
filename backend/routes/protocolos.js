@@ -49,7 +49,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const params = [];
     let paramCount = 1;
 
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       query += ` AND p.responsavel_id = $${paramCount}`;
       params.push(req.user.id);
       paramCount++;
@@ -61,7 +61,7 @@ router.get('/', authMiddleware, async (req, res) => {
       paramCount++;
     }
 
-    if (responsavel_id && req.user.cargo !== 'Auxiliar') {
+    if (responsavel_id && req.user.cargo !== 'Registrador') {
       query += ` AND p.responsavel_id = $${paramCount}`;
       params.push(responsavel_id);
       paramCount++;
@@ -94,7 +94,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     
     const params = [id];
     
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       query += ' AND p.responsavel_id = $2';
       params.push(req.user.id);
     }
@@ -143,7 +143,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Campos obrigatórios faltando' });
     }
 
-    if (req.user.cargo === 'Auxiliar' && responsavel_id != req.user.id) {
+    if (req.user.cargo === 'Registrador' && responsavel_id != req.user.id) {
       return res.status(403).json({ message: 'Você só pode criar protocolos para si mesmo' });
     }
 
@@ -191,7 +191,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { responsavel_id, observacoes, status, tem_orcamento, orcamento_valor, orcamento_pago } = req.body;
 
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       const checkProtocolo = await pool.query('SELECT responsavel_id FROM protocolos WHERE id = $1', [id]);
       
       if (checkProtocolo.rows.length === 0) {
@@ -290,7 +290,7 @@ router.post('/:id/notas', authMiddleware, async (req, res) => {
     let checkQuery = 'SELECT id, numero, responsavel_id FROM protocolos WHERE id = $1';
     const checkParams = [id];
     
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       checkQuery += ' AND responsavel_id = $2';
       checkParams.push(req.user.id);
     }
@@ -335,7 +335,7 @@ router.get('/:id/notas', authMiddleware, async (req, res) => {
     let checkQuery = 'SELECT id FROM protocolos WHERE id = $1';
     const checkParams = [id];
     
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       checkQuery += ' AND responsavel_id = $2';
       checkParams.push(req.user.id);
     }
@@ -369,7 +369,7 @@ router.get('/:id/historico', authMiddleware, async (req, res) => {
     let checkQuery = 'SELECT id FROM protocolos WHERE id = $1';
     const checkParams = [id];
     
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       checkQuery += ' AND responsavel_id = $2';
       checkParams.push(req.user.id);
     }
@@ -408,7 +408,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     const p = pRes.rows[0];
     
-    if (req.user.cargo === 'Auxiliar' && p.responsavel_id != req.user.id) {
+    if (req.user.cargo === 'Registrador' && p.responsavel_id != req.user.id) {
       return res.status(403).json({ message: 'Você só pode cancelar seus próprios protocolos' });
     }
     
@@ -455,7 +455,7 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
 
     const protocolo = protocoloRes.rows[0];
     
-    if (req.user.cargo === 'Auxiliar' && protocolo.responsavel_id != req.user.id) {
+    if (req.user.cargo === 'Registrador' && protocolo.responsavel_id != req.user.id) {
       await client.query('ROLLBACK');
       return res.status(403).json({ message: 'Você só pode adicionar serviços aos seus próprios protocolos' });
     }
@@ -523,7 +523,7 @@ router.patch('/:id/concluir', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       const checkProtocolo = await pool.query('SELECT responsavel_id FROM protocolos WHERE id = $1', [id]);
       
       if (checkProtocolo.rows.length === 0) {
@@ -565,7 +565,7 @@ router.patch('/:id/concluir', authMiddleware, async (req, res) => {
 router.get('/financeiro/relatorio', authMiddleware, async (req, res) => {
   try {
     // Somente Supervisor e Coordenador
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       return res.status(403).json({ message: 'Sem permissão para acessar relatório financeiro' });
     }
 
@@ -659,7 +659,7 @@ router.get('/dashboard/stats', authMiddleware, async (req, res) => {
     let whereClause = '';
     const params = [];
     
-    if (req.user.cargo === 'Auxiliar') {
+    if (req.user.cargo === 'Registrador') {
       whereClause = 'WHERE responsavel_id = $1';
       params.push(req.user.id);
     }
