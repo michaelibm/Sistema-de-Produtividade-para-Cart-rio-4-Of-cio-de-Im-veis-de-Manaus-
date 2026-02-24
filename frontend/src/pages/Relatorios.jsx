@@ -174,7 +174,7 @@ function Relatorios({ usuario }) {
       const [k, g, r, pd, tm, pr, ps] = await Promise.all([
         apiFetch('/kpis'),
         apiFetch('/geral'),
-        apiFetch('/ranking'),
+        apiFetch(`/ranking?data_inicio=${dataInicio}&data_fim=${dataFim}`),
         apiFetch('/producao-diaria'),
         apiFetch('/tendencia-mensal'),
         apiFetch(`/produtividade?data_inicio=${dataInicio}&data_fim=${dataFim}`),
