@@ -704,4 +704,56 @@ router.get('/dashboard/stats', authMiddleware, async (req, res) => {
   }
 });
 
+// Transferir responsável
+router.post('/:id/transferir', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { novo_responsavel_id } = req.body;
+
+    if (!novo_responsavel_id) {
+      return res.status(400).json({ message: 'Novo responsável é obrigatório' });
+    }
+
+    // Verificar se protocolo existe e está em andamento
+    const protocolo = await pool.query(
+      'SELECT id, numero, responsavel_id, status FROM protocolos WHERE id = $1',
+      [id]
+    );
+    if (!protocolo.rows.length) {
+      return res.status(404).json({ message: 'Protocolo não encontrado' });
+    }
+    if (protocolo.rows[0].status !== 'andamento') {
+      return res.status(400).json({ message: 'Só é possível transferir protocolos em andamento' });
+    }
+
+    // Buscar nome do responsável atual e novo
+    const responsavelAtual = await pool.query('SELECT nome FROM usuarios WHERE id = $1', [protocolo.rows[0].responsavel_id]);
+    const novoResponsavel = await pool.query('SELECT nome, setor FROM usuarios WHERE id = $1 AND ativo = true', [novo_responsavel_id]);
+
+    if (!novoResponsavel.rows.length) {
+      return res.status(404).json({ message: 'Novo responsável não encontrado' });
+    }
+
+    // Atualizar responsável
+    await pool.query(
+      'UPDATE protocolos SET responsavel_id = $1, updated_at = NOW() WHERE id = $2',
+      [novo_responsavel_id, id]
+    );
+
+    // Registrar no histórico
+    const nomeAtual = responsavelAtual.rows[0]?.nome || 'Desconhecido';
+    const nomeNovo = novoResponsavel.rows[0]?.nome || 'Desconhecido';
+    await pool.query(
+      `INSERT INTO historico (protocolo_id, usuario_id, acao, descricao, created_at)
+       VALUES ($1, $2, 'transferencia', $3, NOW())`,
+      [id, req.user.id, `Protocolo transferido de ${nomeAtual} para ${nomeNovo}`]
+    );
+
+    res.json({ message: 'Protocolo transferido com sucesso' });
+  } catch (error) {
+    console.error('Erro ao transferir protocolo:', error);
+    res.status(500).json({ message: 'Erro ao transferir protocolo' });
+  }
+});
+
 module.exports = router;

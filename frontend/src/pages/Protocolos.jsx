@@ -493,6 +493,12 @@ export default function Protocolos({ usuario }) {
   const [renovarPrazo, setRenovarPrazo] = useState(true);
   const [servicoResp, setServicoResp] = useState(null);
 
+  // Transferência
+  const [modalTransfOpen, setModalTransfOpen] = useState(false);
+  const [transfProtocolo, setTransfProtocolo] = useState(null);
+  const [transfResponsavel, setTransfResponsavel] = useState("");
+  const [transfSaving, setTransfSaving] = useState(false);
+
   // Modal Notas e Histórico
   const [modalNotasOpen, setModalNotasOpen] = useState(false);
   const [protocoloNotasSel, setProtocoloNotasSel] = useState(null);
@@ -690,6 +696,41 @@ export default function Protocolos({ usuario }) {
     setRenovarPrazo(true);
     setServicoResp(null);
     setModalServicoOpen(true);
+  };
+
+  const abrirTransferencia = (p) => {
+    setTransfProtocolo(p);
+    setTransfResponsavel("");
+    setModalTransfOpen(true);
+  };
+
+  const fecharTransferencia = () => {
+    setModalTransfOpen(false);
+    setTransfProtocolo(null);
+    setTransfResponsavel("");
+  };
+
+  const confirmarTransferencia = async () => {
+    if (!transfResponsavel) return;
+    setTransfSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const resp = await fetch(`${API_URL}/protocolos/${transfProtocolo.id}/transferir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ novo_responsavel_id: transfResponsavel }),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.message || "Erro ao transferir");
+      }
+      fecharTransferencia();
+      await carregar();
+    } catch (e) {
+      setErro(e?.message || "Erro ao transferir protocolo");
+    } finally {
+      setTransfSaving(false);
+    }
   };
 
   const fecharModalServico = () => {
@@ -994,6 +1035,16 @@ export default function Protocolos({ usuario }) {
                             title="Concluir"
                           >
                             ✓
+                          </button>
+                        )}
+                        {p.status === "andamento" && (
+                          <button
+                            className="btn-action"
+                            style={{ background: '#ede9fe', color: '#7c3aed' }}
+                            onClick={() => abrirTransferencia(p)}
+                            title="Transferir responsável"
+                          >
+                            🔄
                           </button>
                         )}
                         <button
@@ -1495,6 +1546,51 @@ export default function Protocolos({ usuario }) {
                 onClick={fecharModalNotas}
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal Transferência ===== */}
+      {modalTransfOpen && transfProtocolo && (
+        <div className="modal-overlay" onClick={fecharTransferencia}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <h2>🔄 Transferir Protocolo</h2>
+            <p style={{ color: '#64748b', marginBottom: '1.25rem', fontSize: 14 }}>
+              Protocolo <strong>{transfProtocolo.numero}</strong> — responsável atual: <strong>{transfProtocolo.responsavel_nome}</strong>
+            </p>
+
+            <div className="form-group">
+              <label className="form-label">Novo responsável</label>
+              <select
+                className="form-select"
+                value={transfResponsavel}
+                onChange={(e) => setTransfResponsavel(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {funcionarios
+                  .filter((f) => f.id !== transfProtocolo.responsavel_id)
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.nome} ({f.cargo}){f.setor ? ` — ${f.setor}` : ""}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={fecharTransferencia}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={confirmarTransferencia}
+                disabled={!transfResponsavel || transfSaving}
+                style={{ background: '#7c3aed' }}
+              >
+                {transfSaving ? "Transferindo..." : "✔ Confirmar Transferência"}
               </button>
             </div>
           </div>
