@@ -31,11 +31,11 @@ router.get('/geral', authMiddleware, async (req, res) => {
     const stats = await pool.query(`
       SELECT 
         COUNT(*)::int as total_protocolos,
-        COUNT(*) FILTER (WHERE status = 'andamento')::int as em_andamento,
-        COUNT(*) FILTER (WHERE status = 'concluido')::int as concluidos,
-        COUNT(*) FILTER (WHERE status = 'concluido' AND data_conclusao <= data_vencimento)::int as concluidos_no_prazo,
-        COUNT(*) FILTER (WHERE status = 'concluido' AND data_conclusao > data_vencimento)::int as concluidos_atrasados,
-        COUNT(*) FILTER (WHERE status = 'andamento' AND data_vencimento < CURRENT_DATE)::int as atrasados_ativos,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'andamento')::int as em_andamento,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido')::int as concluidos,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido' AND data_conclusao <= data_vencimento)::int as concluidos_no_prazo,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido' AND data_conclusao > data_vencimento)::int as concluidos_atrasados,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'andamento' AND data_vencimento < CURRENT_DATE)::int as atrasados_ativos,
         COALESCE(ROUND(AVG(data_conclusao - data_entrada)), 0)::int as tempo_medio_conclusao
       FROM protocolos p
       WHERE 1=1 ${dateFilter}
@@ -60,15 +60,15 @@ router.get('/por-funcionario', authMiddleware, async (req, res) => {
         u.nome,
         u.cargo,
         COUNT(p.id)::int as total_protocolos,
-        COUNT(p.id) FILTER (WHERE p.status = 'andamento')::int as em_andamento,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido')::int as concluidos,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao > p.data_vencimento)::int as atrasados,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'andamento')::int as em_andamento,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::int as concluidos,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao > p.data_vencimento)::int as atrasados,
         CASE 
-          WHEN COUNT(p.id) FILTER (WHERE p.status = 'concluido') > 0 THEN
+          WHEN COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido') > 0 THEN
             ROUND(
-              (COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao <= p.data_vencimento)::numeric / 
-               COUNT(p.id) FILTER (WHERE p.status = 'concluido')::numeric) * 100
+              (COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao <= p.data_vencimento)::numeric / 
+               COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::numeric) * 100
             )::int
           ELSE 0
         END as taxa_sucesso
@@ -99,11 +99,11 @@ router.get('/por-servico', authMiddleware, async (req, res) => {
         s.prazo,
         s.tipo_prazo,
         COUNT(p.id)::int as total_protocolos,
-        COUNT(p.id) FILTER (WHERE p.status = 'andamento')::int as em_andamento,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido')::int as concluidos,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'andamento')::int as em_andamento,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::int as concluidos,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
         COALESCE(
-          ROUND(AVG(p.data_conclusao - p.data_entrada) FILTER (WHERE p.status = 'concluido')), 
+          ROUND(AVG(p.data_conclusao - p.data_entrada) FILTER (WHERE LOWER(p.status) = 'concluido')), 
           0
         )::int as tempo_medio
       FROM servicos s
@@ -132,7 +132,7 @@ router.get('/vencendo', authMiddleware, async (req, res) => {
       FROM protocolos p
       JOIN servicos s ON p.servico_id = s.id
       JOIN usuarios u ON p.responsavel_id = u.id
-      WHERE p.status = 'andamento' 
+      WHERE LOWER(p.status) = 'andamento' 
         AND p.data_vencimento BETWEEN CURRENT_DATE AND CURRENT_DATE + 7
       ORDER BY p.data_vencimento ASC
     `);
@@ -156,7 +156,7 @@ router.get('/atrasados', authMiddleware, async (req, res) => {
       FROM protocolos p
       JOIN servicos s ON p.servico_id = s.id
       JOIN usuarios u ON p.responsavel_id = u.id
-      WHERE p.status = 'andamento' 
+      WHERE LOWER(p.status) = 'andamento' 
         AND p.data_vencimento < CURRENT_DATE
       ORDER BY dias_atraso DESC
     `);
@@ -198,7 +198,7 @@ router.get('/producao-diaria', authMiddleware, async (req, res) => {
       SELECT 
         data_entrada::date as dia,
         COUNT(*)::int as criados,
-        COUNT(*) FILTER (WHERE status = 'concluido')::int as concluidos
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido')::int as concluidos
       FROM protocolos
       WHERE data_entrada >= CURRENT_DATE - 30
       GROUP BY data_entrada::date
@@ -226,10 +226,10 @@ router.get('/produtividade', authMiddleware, async (req, res) => {
         u.cargo,
         u.setor,
         COUNT(p.id)::int as total_criados,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido')::int as total_concluidos,
-        COUNT(p.id) FILTER (WHERE p.status = 'andamento')::int as em_andamento,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido' AND p.data_conclusao > p.data_vencimento)::int as atrasados,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::int as total_concluidos,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'andamento')::int as em_andamento,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao <= p.data_vencimento)::int as no_prazo,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido' AND p.data_conclusao > p.data_vencimento)::int as atrasados,
         COALESCE(ROUND(
           COUNT(p.id)::numeric / NULLIF(($2::date - $1::date + 1), 0), 2
         ), 0)::float as media_diaria,
@@ -263,10 +263,10 @@ router.get('/kpis', authMiddleware, async (req, res) => {
         COUNT(*) FILTER (WHERE data_entrada = $1)::int as criados_hoje,
         COUNT(*) FILTER (WHERE data_entrada >= $2)::int as criados_semana,
         COUNT(*) FILTER (WHERE data_entrada >= $3)::int as criados_mes,
-        COUNT(*) FILTER (WHERE status = 'concluido' AND data_entrada = $1)::int as concluidos_hoje,
-        COUNT(*) FILTER (WHERE status = 'concluido' AND data_entrada >= $3)::int as concluidos_mes,
-        COUNT(*) FILTER (WHERE status = 'andamento')::int as em_andamento,
-        COUNT(*) FILTER (WHERE status = 'andamento' AND data_vencimento < $1)::int as atrasados,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido' AND data_entrada = $1)::int as concluidos_hoje,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido' AND data_entrada >= $3)::int as concluidos_mes,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'andamento')::int as em_andamento,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'andamento' AND data_vencimento < $1)::int as atrasados,
         COUNT(DISTINCT responsavel_id)::int as funcionarios_ativos
       FROM protocolos
     `, [hoje, inicioSemana.toISOString().slice(0, 10), inicioMes]);
@@ -295,8 +295,8 @@ router.get('/tendencia-mensal', authMiddleware, async (req, res) => {
         TO_CHAR(data_entrada, 'YYYY-MM') as mes,
         TO_CHAR(data_entrada, 'Mon/YY') as mes_label,
         COUNT(*)::int as criados,
-        COUNT(*) FILTER (WHERE status = 'concluido')::int as concluidos,
-        COUNT(*) FILTER (WHERE status = 'andamento' AND data_vencimento < CURRENT_DATE)::int as atrasados
+        COUNT(*) FILTER (WHERE LOWER(status) = 'concluido')::int as concluidos,
+        COUNT(*) FILTER (WHERE LOWER(status) = 'andamento' AND data_vencimento < CURRENT_DATE)::int as atrasados
       FROM protocolos
       WHERE data_entrada >= CURRENT_DATE - INTERVAL '6 months'
       GROUP BY TO_CHAR(data_entrada, 'YYYY-MM'), TO_CHAR(data_entrada, 'Mon/YY')
@@ -321,10 +321,10 @@ router.get('/ranking', authMiddleware, async (req, res) => {
         u.cargo,
         u.setor,
         COUNT(p.id)::int as total,
-        COUNT(p.id) FILTER (WHERE p.status = 'concluido')::int as concluidos,
+        COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::int as concluidos,
         CASE 
           WHEN COUNT(p.id) > 0 THEN
-            ROUND((COUNT(p.id) FILTER (WHERE p.status = 'concluido')::numeric / COUNT(p.id)) * 100)::int
+            ROUND((COUNT(p.id) FILTER (WHERE LOWER(p.status) = 'concluido')::numeric / COUNT(p.id)) * 100)::int
           ELSE 0
         END as taxa_conclusao
       FROM usuarios u
