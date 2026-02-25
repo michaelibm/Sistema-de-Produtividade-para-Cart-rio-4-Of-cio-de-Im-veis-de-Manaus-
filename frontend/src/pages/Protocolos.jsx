@@ -499,6 +499,10 @@ export default function Protocolos({ usuario }) {
   const [transfResponsavel, setTransfResponsavel] = useState("");
   const [transfSaving, setTransfSaving] = useState(false);
 
+  // Conflito de protocolo existente
+  const [modalConflitoOpen, setModalConflitoOpen] = useState(false);
+  const [conflitoInfo, setConflitoInfo] = useState(null); // { code, message, protocolo_id, responsavel_nome, status }
+
   // Modal Notas e Histórico
   const [modalNotasOpen, setModalNotasOpen] = useState(false);
   const [protocoloNotasSel, setProtocoloNotasSel] = useState(null);
@@ -642,17 +646,34 @@ export default function Protocolos({ usuario }) {
             : null,
         });
       } else {
-        await createProtocolo({
-          numero: form.numero,
-          servico_id: Number(form.servico_id),
-          responsavel_id: Number(form.responsavel_id),
-          data_entrada: form.data_entrada,
-          observacoes: form.observacoes,
-          tem_orcamento: form.tem_orcamento,
-          orcamento_valor: form.tem_orcamento
-            ? parseFloat(form.orcamento_valor)
-            : null,
+        // Tentar criar — tratar conflito 409
+        const token = localStorage.getItem("token");
+        const resp = await fetch(`${API_URL}/protocolos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            numero: form.numero,
+            servico_id: Number(form.servico_id),
+            responsavel_id: Number(form.responsavel_id),
+            data_entrada: form.data_entrada,
+            observacoes: form.observacoes,
+            tem_orcamento: form.tem_orcamento,
+            orcamento_valor: form.tem_orcamento ? parseFloat(form.orcamento_valor) : null,
+          }),
         });
+
+        if (resp.status === 409) {
+          const data = await resp.json();
+          setConflitoInfo({ ...data, solicitante_id: Number(form.responsavel_id) });
+          setModalConflitoOpen(true);
+          setSaving(false);
+          return;
+        }
+
+        if (!resp.ok) {
+          const data = await resp.json();
+          throw new Error(data.message || "Erro ao criar protocolo");
+        }
       }
 
       fecharModal();
@@ -728,6 +749,31 @@ export default function Protocolos({ usuario }) {
       await carregar();
     } catch (e) {
       setErro(e?.message || "Erro ao transferir protocolo");
+    } finally {
+      setTransfSaving(false);
+    }
+  };
+
+  const confirmarReabertura = async () => {
+    if (!conflitoInfo) return;
+    setTransfSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const resp = await fetch(`${API_URL}/protocolos/${conflitoInfo.protocolo_id}/reabrir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ novo_responsavel_id: conflitoInfo.solicitante_id }),
+      });
+      if (!resp.ok) {
+        const data = await resp.json();
+        throw new Error(data.message || "Erro ao reabrir");
+      }
+      setModalConflitoOpen(false);
+      setConflitoInfo(null);
+      fecharModal();
+      await carregar();
+    } catch (e) {
+      setErro(e?.message || "Erro ao reabrir protocolo");
     } finally {
       setTransfSaving(false);
     }
@@ -1548,6 +1594,61 @@ export default function Protocolos({ usuario }) {
                 Fechar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Modal Conflito - Protocolo já existe ===== */}
+      {modalConflitoOpen && conflitoInfo && (
+        <div className="modal-overlay" onClick={() => setModalConflitoOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            {conflitoInfo.code === 'PROTOCOLO_CONCLUIDO' ? (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '3rem' }}>✅</span>
+                </div>
+                <h2 style={{ textAlign: 'center', color: '#1e293b', marginBottom: '0.5rem' }}>Protocolo já concluído</h2>
+                <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '1.5rem', fontSize: 14 }}>
+                  Este protocolo foi concluído pelo registrador <strong>{conflitoInfo.responsavel_nome}</strong>.
+                  <br />Deseja reabri-lo e assumir a responsabilidade?
+                </p>
+                <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.5rem', fontSize: 13, color: '#92400e' }}>
+                  ⚠️ A produtividade de <strong>{conflitoInfo.responsavel_nome}</strong> será mantida. O protocolo voltará ao seu status <strong>Em andamento</strong> sob sua responsabilidade.
+                </div>
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setModalConflitoOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={confirmarReabertura}
+                    disabled={transfSaving}
+                    style={{ background: '#10b981' }}
+                  >
+                    {transfSaving ? "Reabrindo..." : "✔ Sim, reabrir protocolo"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '3rem' }}>⚠️</span>
+                </div>
+                <h2 style={{ textAlign: 'center', color: '#1e293b', marginBottom: '0.5rem' }}>Protocolo em andamento</h2>
+                <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '1.5rem', fontSize: 14 }}>
+                  Este protocolo já existe e está <strong>em andamento</strong> com o registrador <strong>{conflitoInfo.responsavel_nome}</strong>.
+                </p>
+                <div style={{ background: '#dbeafe', border: '1px solid #93c5fd', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.5rem', fontSize: 13, color: '#1e40af' }}>
+                  💡 Para assumir este protocolo, solicite ao registrador <strong>{conflitoInfo.responsavel_nome}</strong> ou ao Supervisor/Coordenador que realize a transferência.
+                </div>
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-primary" onClick={() => setModalConflitoOpen(false)}>
+                    Entendido
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

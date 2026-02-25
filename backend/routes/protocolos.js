@@ -147,9 +147,31 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Você só pode criar protocolos para si mesmo' });
     }
 
-    const existente = await pool.query('SELECT id FROM protocolos WHERE numero = $1', [numero]);
+    const existente = await pool.query(`
+      SELECT p.id, p.status, p.responsavel_id, u.nome as responsavel_nome
+      FROM protocolos p
+      JOIN usuarios u ON p.responsavel_id = u.id
+      WHERE p.numero = $1
+    `, [numero]);
+
     if (existente.rows.length > 0) {
-      return res.status(400).json({ message: 'Número de protocolo já existe' });
+      const p = existente.rows[0];
+      if (p.status.toLowerCase() === 'concluido') {
+        return res.status(409).json({
+          code: 'PROTOCOLO_CONCLUIDO',
+          message: `Este protocolo já está concluído pelo registrador ${p.responsavel_nome}. Deseja reabri-lo?`,
+          protocolo_id: p.id,
+          responsavel_nome: p.responsavel_nome,
+          status: p.status,
+        });
+      }
+      return res.status(409).json({
+        code: 'PROTOCOLO_EM_ANDAMENTO',
+        message: `Este protocolo já existe e está em andamento com o registrador ${p.responsavel_nome}. Para usá-lo, peça que seja transferido.`,
+        protocolo_id: p.id,
+        responsavel_nome: p.responsavel_nome,
+        status: p.status,
+      });
     }
 
     const servicoResult = await pool.query('SELECT prazo, tipo_prazo FROM servicos WHERE id = $1', [servico_id]);
@@ -753,6 +775,55 @@ router.post('/:id/transferir', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Erro ao transferir protocolo:', error);
     res.status(500).json({ message: 'Erro ao transferir protocolo' });
+  }
+});
+
+// Reabrir protocolo concluído (transferindo para novo responsável)
+router.post('/:id/reabrir', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { novo_responsavel_id } = req.body;
+
+    const protocolo = await pool.query(
+      'SELECT id, numero, responsavel_id, status FROM protocolos WHERE id = $1',
+      [id]
+    );
+    if (!protocolo.rows.length) {
+      return res.status(404).json({ message: 'Protocolo não encontrado' });
+    }
+    const p = protocolo.rows[0];
+    if (p.status.toLowerCase() !== 'concluido') {
+      return res.status(400).json({ message: 'Protocolo não está concluído' });
+    }
+
+    const responsavelAnterior = await pool.query('SELECT nome FROM usuarios WHERE id = $1', [p.responsavel_id]);
+    const novoResp = await pool.query('SELECT nome FROM usuarios WHERE id = $1 AND ativo = true', [novo_responsavel_id]);
+    if (!novoResp.rows.length) {
+      return res.status(404).json({ message: 'Responsável não encontrado' });
+    }
+
+    // Reabrir: status volta pra andamento, novo responsável, limpa data_conclusao
+    // Mantém data_conclusao do responsável anterior para não perder produtividade
+    await pool.query(
+      `UPDATE protocolos 
+       SET status = 'andamento', responsavel_id = $1, data_conclusao = NULL, updated_at = NOW()
+       WHERE id = $2`,
+      [novo_responsavel_id, id]
+    );
+
+    // Registrar no histórico
+    const nomeAnterior = responsavelAnterior.rows[0]?.nome || 'Desconhecido';
+    const nomeNovo = novoResp.rows[0]?.nome || 'Desconhecido';
+    await pool.query(
+      `INSERT INTO historico (protocolo_id, usuario_id, acao, descricao, created_at)
+       VALUES ($1, $2, 'reabertura', $3, NOW())`,
+      [id, req.user.id, `Protocolo reaberto por ${nomeNovo}. Conclusão anterior por ${nomeAnterior} mantida no histórico.`]
+    );
+
+    res.json({ message: 'Protocolo reaberto com sucesso' });
+  } catch (error) {
+    console.error('Erro ao reabrir protocolo:', error);
+    res.status(500).json({ message: 'Erro ao reabrir protocolo' });
   }
 });
 
