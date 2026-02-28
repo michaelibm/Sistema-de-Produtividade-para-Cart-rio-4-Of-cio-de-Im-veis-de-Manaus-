@@ -137,7 +137,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Criar novo protocolo
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { numero, servico_id, responsavel_id, data_entrada, observacoes, tem_orcamento, orcamento_valor, prioridade } = req.body;
+    const { numero, servico_id, responsavel_id, data_entrada, observacoes, tem_orcamento, orcamento_valor, prioridade, status, nome_cliente } = req.body;
 
     if (!numero || !servico_id || !responsavel_id || !data_entrada) {
       return res.status(400).json({ message: 'Campos obrigatórios faltando' });
@@ -156,6 +156,15 @@ router.post('/', authMiddleware, async (req, res) => {
 
     if (existente.rows.length > 0) {
       const p = existente.rows[0];
+      if (p.status.toLowerCase() === 'aguardando') {
+        return res.status(409).json({
+          code: 'PROTOCOLO_AGUARDANDO',
+          message: `Este protocolo já está na fila aguardando um registrador.`,
+          protocolo_id: p.id,
+          responsavel_nome: p.responsavel_nome,
+          status: p.status,
+        });
+      }
       if (p.status.toLowerCase() === 'concluido') {
         return res.status(409).json({
           code: 'PROTOCOLO_CONCLUIDO',
@@ -185,12 +194,13 @@ router.post('/', authMiddleware, async (req, res) => {
     // Validar valor do orçamento
     const valorOrcamento = (tem_orcamento && orcamento_valor) ? parseFloat(orcamento_valor) : null;
     const prioridadeVal = prioridade ? parseInt(prioridade) : 2;
+    const statusVal = status || 'andamento';
 
     const result = await pool.query(
-      `INSERT INTO protocolos (numero, servico_id, responsavel_id, data_entrada, data_vencimento, observacoes, tem_orcamento, orcamento_valor, prioridade)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO protocolos (numero, servico_id, responsavel_id, data_entrada, data_vencimento, observacoes, tem_orcamento, orcamento_valor, prioridade, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [numero, servico_id, responsavel_id, data_entrada, data_vencimento, observacoes, !!tem_orcamento, valorOrcamento, prioridadeVal]
+      [numero, servico_id, responsavel_id, data_entrada, data_vencimento, observacoes || nome_cliente || null, !!tem_orcamento, valorOrcamento, prioridadeVal, statusVal]
     );
 
     const userResult = await pool.query('SELECT nome, setor FROM usuarios WHERE id = $1', [responsavel_id]);
@@ -751,8 +761,8 @@ router.post('/:id/transferir', authMiddleware, async (req, res) => {
     if (!protocolo.rows.length) {
       return res.status(404).json({ message: 'Protocolo não encontrado' });
     }
-    if (protocolo.rows[0].status !== 'andamento') {
-      return res.status(400).json({ message: 'Só é possível transferir protocolos em andamento' });
+    if (protocolo.rows[0].status !== 'andamento' && protocolo.rows[0].status !== 'aguardando') {
+      return res.status(400).json({ message: 'Só é possível transferir protocolos em andamento ou aguardando' });
     }
 
     // Buscar nome do responsável atual e novo
@@ -763,9 +773,9 @@ router.post('/:id/transferir', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Novo responsável não encontrado' });
     }
 
-    // Atualizar responsável
+    // Atualizar responsável e mudar status para andamento (caso esteja aguardando)
     await pool.query(
-      'UPDATE protocolos SET responsavel_id = $1, updated_at = NOW() WHERE id = $2',
+      'UPDATE protocolos SET responsavel_id = $1, status = CASE WHEN status = \'aguardando\' THEN \'andamento\' ELSE status END, updated_at = NOW() WHERE id = $2',
       [novo_responsavel_id, id]
     );
 
