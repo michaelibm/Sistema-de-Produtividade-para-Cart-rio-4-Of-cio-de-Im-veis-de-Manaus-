@@ -16,6 +16,7 @@ export default function FilaRegistrador({ usuario }) {
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [modalConfirm, setModalConfirm] = useState(null);
+  const [busca, setBusca] = useState("");
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -93,8 +94,11 @@ export default function FilaRegistrador({ usuario }) {
     setIniciando(false);
   };
 
-  const oficiais = fila.filter((p) => (p.prioridade || 2) === 3);
-  const demais   = fila.filter((p) => (p.prioridade || 2) !== 3);
+  const filaFiltrada = busca.trim()
+    ? fila.filter((p) => String(p.numero).toLowerCase().includes(busca.trim().toLowerCase()))
+    : fila;
+  const oficiais = filaFiltrada.filter((p) => (p.prioridade || 2) === 3);
+  const demais   = filaFiltrada.filter((p) => (p.prioridade || 2) !== 3);
 
   return (
     <div className="protocolos-container">
@@ -117,9 +121,20 @@ export default function FilaRegistrador({ usuario }) {
         background: "white", borderRadius: 12, border: "1px solid #e5e7eb",
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="🔍 Buscar por número..."
+            style={{
+              padding: "0.5rem 0.75rem", borderRadius: 8, border: "1px solid #e5e7eb",
+              fontSize: 14, outline: "none", width: 220,
+            }}
+          />
           <span style={{ color: "#64748b", fontSize: 14 }}>
-            <strong style={{ color: "#1f2937" }}>{fila.length}</strong> na fila
+            <strong style={{ color: "#1f2937" }}>{filaFiltrada.length}</strong>
+            {busca ? ` de ${fila.length}` : ""} na fila
             {selecionados.size > 0 && (
               <> · <strong style={{ color: "#f59e0b" }}>{selecionados.size}</strong> selecionado(s)</>
             )}

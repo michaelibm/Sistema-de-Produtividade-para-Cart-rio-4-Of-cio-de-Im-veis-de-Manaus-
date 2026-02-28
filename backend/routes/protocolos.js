@@ -50,15 +50,26 @@ router.get('/', authMiddleware, async (req, res) => {
     let paramCount = 1;
 
     if (req.user.cargo === 'Registrador') {
-      query += ` AND p.responsavel_id = $${paramCount}`;
-      params.push(req.user.id);
-      paramCount++;
-    }
-
-    if (status) {
-      query += ` AND p.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
+      if (status === 'aguardando') {
+        // Fila de atendimento: registrador vê TODOS os aguardando
+        query += ` AND p.status = 'aguardando'`;
+      } else {
+        // Demais consultas: registrador só vê os próprios
+        query += ` AND p.responsavel_id = $${paramCount}`;
+        params.push(req.user.id);
+        paramCount++;
+        if (status) {
+          query += ` AND p.status = $${paramCount}`;
+          params.push(status);
+          paramCount++;
+        }
+      }
+    } else {
+      if (status) {
+        query += ` AND p.status = $${paramCount}`;
+        params.push(status);
+        paramCount++;
+      }
     }
 
     if (responsavel_id && req.user.cargo !== 'Registrador') {
