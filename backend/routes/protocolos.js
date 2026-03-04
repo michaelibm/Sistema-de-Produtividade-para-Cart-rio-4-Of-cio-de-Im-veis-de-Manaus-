@@ -233,19 +233,19 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { responsavel_id, observacoes, status, tem_orcamento, orcamento_valor, orcamento_pago, prioridade } = req.body;
+    const { responsavel_id, observacoes, status, tem_orcamento, orcamento_valor, orcamento_pago, prioridade, servico_id, data_entrada } = req.body;
 
     if (req.user.cargo === 'Registrador') {
       const checkProtocolo = await pool.query('SELECT responsavel_id FROM protocolos WHERE id = $1', [id]);
-      
+
       if (checkProtocolo.rows.length === 0) {
         return res.status(404).json({ message: 'Protocolo não encontrado' });
       }
-      
+
       if (checkProtocolo.rows[0].responsavel_id != req.user.id) {
         return res.status(403).json({ message: 'Você só pode editar seus próprios protocolos' });
       }
-      
+
       if (responsavel_id && responsavel_id != req.user.id) {
         return res.status(403).json({ message: 'Você não pode transferir protocolos para outros usuários' });
       }
@@ -255,6 +255,39 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const params = [];
     let paramCount = 1;
     const updates = [];
+
+    // Se servico_id ou data_entrada foram enviados, recalcula o vencimento
+    if (servico_id !== undefined || data_entrada !== undefined) {
+      const atual = await pool.query('SELECT servico_id, data_entrada FROM protocolos WHERE id = $1', [id]);
+      if (atual.rows.length === 0) {
+        return res.status(404).json({ message: 'Protocolo não encontrado' });
+      }
+      const servicoIdCalculo = servico_id !== undefined ? servico_id : atual.rows[0].servico_id;
+      const dataEntradaCalculo = data_entrada !== undefined ? data_entrada : atual.rows[0].data_entrada;
+
+      const servicoResult = await pool.query('SELECT prazo, tipo_prazo FROM servicos WHERE id = $1', [servicoIdCalculo]);
+      if (servicoResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Serviço não encontrado' });
+      }
+      const servico = servicoResult.rows[0];
+      const novoVencimento = await calcularDataVencimento(dataEntradaCalculo, servico.prazo, servico.tipo_prazo);
+
+      if (servico_id !== undefined) {
+        updates.push(`servico_id = $${paramCount}`);
+        params.push(servico_id);
+        paramCount++;
+      }
+
+      if (data_entrada !== undefined) {
+        updates.push(`data_entrada = $${paramCount}`);
+        params.push(data_entrada);
+        paramCount++;
+      }
+
+      updates.push(`data_vencimento = $${paramCount}`);
+      params.push(novoVencimento);
+      paramCount++;
+    }
 
     if (responsavel_id) {
       updates.push(`responsavel_id = $${paramCount}`);

@@ -807,7 +807,9 @@ export default function Protocolos({ usuario }) {
 
       if (editId) {
         await updateProtocolo(editId, {
+          servico_id: Number(form.servico_id),
           responsavel_id: Number(form.responsavel_id),
+          data_entrada: form.data_entrada,
           observacoes: form.observacoes,
           status: form.status,
           tem_orcamento: form.tem_orcamento,
