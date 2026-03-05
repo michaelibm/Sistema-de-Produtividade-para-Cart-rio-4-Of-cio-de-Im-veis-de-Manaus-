@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { API_URL, getServicos } from "../services/api";
+import { API_URL, getServicos, addNota } from "../services/api";
 import "./Protocolos.css";
 
 const PRIORIDADE_CONFIG = {
@@ -91,6 +91,9 @@ export default function FilaAtendimento({ usuario }) {
         else
           setErro(data.message || "Erro ao enviar protocolo.");
         return;
+      }
+      if (form.observacoes.trim()) {
+        await addNota(data.id, `[Atendimento] ${form.observacoes.trim()}`);
       }
       setSucesso(`✅ Protocolo ${form.numero} enviado para a fila!`);
       setForm((f) => ({ numero: "", servico_id: f.servico_id, nome_cliente: "", observacoes: "", prioridade: 2 }));

@@ -88,6 +88,70 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Listar sessões ativas do usuário logado
+router.get('/minhas-sessoes', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT ps.id as sessao_id, ps.protocolo_id, ps.iniciado_em,
+              p.numero, p.status, s.nome as servico_nome
+       FROM protocolo_sessoes ps
+       JOIN protocolos p ON ps.protocolo_id = p.id
+       JOIN servicos s ON p.servico_id = s.id
+       WHERE ps.usuario_id = $1 AND ps.pausado_em IS NULL
+       ORDER BY ps.iniciado_em DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao listar sessões ativas:', error);
+    res.status(500).json({ message: 'Erro ao listar sessões' });
+  }
+});
+
+// Relatório: protocolos trabalhados por usuário em uma data
+router.get('/relatorio-sessoes', authMiddleware, async (req, res) => {
+  try {
+    const { data, usuario_id } = req.query;
+    const dataFiltro = data || new Date().toISOString().slice(0, 10);
+
+    let params = [dataFiltro];
+    let userFilter = '';
+    if (usuario_id && req.user.cargo !== 'Registrador') {
+      userFilter = ' AND ps.usuario_id = $2';
+      params.push(usuario_id);
+    } else if (req.user.cargo === 'Registrador') {
+      userFilter = ' AND ps.usuario_id = $2';
+      params.push(req.user.id);
+    }
+
+    const result = await pool.query(
+      `SELECT u.nome as usuario_nome, u.cargo, u.setor,
+              COUNT(DISTINCT ps.protocolo_id) as total_protocolos,
+              COUNT(ps.id) as total_sessoes,
+              SUM(EXTRACT(EPOCH FROM (COALESCE(ps.pausado_em, NOW()) - ps.iniciado_em))/60)::INTEGER as minutos_trabalhados,
+              json_agg(DISTINCT jsonb_build_object(
+                'protocolo_id', p.id,
+                'numero', p.numero,
+                'servico', s.nome,
+                'status', p.status
+              )) as protocolos
+       FROM protocolo_sessoes ps
+       JOIN usuarios u ON ps.usuario_id = u.id
+       JOIN protocolos p ON ps.protocolo_id = p.id
+       JOIN servicos s ON p.servico_id = s.id
+       WHERE DATE(ps.iniciado_em AT TIME ZONE 'America/Manaus') = $1
+       ${userFilter}
+       GROUP BY u.id, u.nome, u.cargo, u.setor
+       ORDER BY total_protocolos DESC`,
+      params
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao gerar relatório de sessões:', error);
+    res.status(500).json({ message: 'Erro ao gerar relatório' });
+  }
+});
+
 // Buscar protocolo por ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
@@ -944,6 +1008,96 @@ router.get('/verificar/:numero', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Erro ao verificar protocolo:', error);
     res.status(500).json({ message: 'Erro ao verificar' });
+  }
+});
+
+// ============================================================
+// SESSÕES DE TRABALHO
+// ============================================================
+
+// Iniciar sessão de trabalho em um protocolo
+router.post('/:id/iniciar', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verifica se o protocolo existe e está em andamento
+    const protocolo = await pool.query(
+      'SELECT id, status, responsavel_id FROM protocolos WHERE id = $1',
+      [id]
+    );
+    if (protocolo.rows.length === 0) {
+      return res.status(404).json({ message: 'Protocolo não encontrado' });
+    }
+    if (protocolo.rows[0].status !== 'andamento') {
+      return res.status(400).json({ message: 'Só é possível iniciar sessão em protocolos em andamento' });
+    }
+
+    // Verifica se já tem sessão ativa neste protocolo para este usuário
+    const sessaoExistente = await pool.query(
+      'SELECT id FROM protocolo_sessoes WHERE protocolo_id = $1 AND usuario_id = $2 AND pausado_em IS NULL',
+      [id, req.user.id]
+    );
+    if (sessaoExistente.rows.length > 0) {
+      return res.status(400).json({ message: 'Você já possui uma sessão ativa neste protocolo' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO protocolo_sessoes (protocolo_id, usuario_id) VALUES ($1, $2) RETURNING *',
+      [id, req.user.id]
+    );
+
+    await pool.query(
+      'INSERT INTO historico (protocolo_id, usuario_id, acao, descricao) VALUES ($1, $2, $3, $4)',
+      [id, req.user.id, 'INICIO_SESSAO', `Sessão de trabalho iniciada por ${req.user.email}`]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao iniciar sessão:', error);
+    res.status(500).json({ message: 'Erro ao iniciar sessão' });
+  }
+});
+
+// Pausar sessão de trabalho (nota obrigatória)
+router.post('/:id/pausar', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nota } = req.body;
+
+    if (!nota || !nota.trim()) {
+      return res.status(400).json({ message: 'A nota é obrigatória ao pausar. Descreva o que foi feito e o que está pendente.' });
+    }
+
+    // Busca sessão ativa deste usuário neste protocolo
+    const sessao = await pool.query(
+      'SELECT id FROM protocolo_sessoes WHERE protocolo_id = $1 AND usuario_id = $2 AND pausado_em IS NULL',
+      [id, req.user.id]
+    );
+    if (sessao.rows.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma sessão ativa encontrada para este protocolo' });
+    }
+
+    // Fecha a sessão com nota
+    await pool.query(
+      'UPDATE protocolo_sessoes SET pausado_em = NOW(), nota_pausa = $1 WHERE id = $2',
+      [nota.trim(), sessao.rows[0].id]
+    );
+
+    // Salva a nota no sistema de notas do protocolo
+    await pool.query(
+      'INSERT INTO protocolo_notas (protocolo_id, usuario_id, nota) VALUES ($1, $2, $3)',
+      [id, req.user.id, `[Pausa] ${nota.trim()}`]
+    );
+
+    await pool.query(
+      'INSERT INTO historico (protocolo_id, usuario_id, acao, descricao) VALUES ($1, $2, $3, $4)',
+      [id, req.user.id, 'PAUSA_SESSAO', `Sessão pausada por ${req.user.email}`]
+    );
+
+    res.json({ message: 'Sessão pausada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao pausar sessão:', error);
+    res.status(500).json({ message: 'Erro ao pausar sessão' });
   }
 });
 
