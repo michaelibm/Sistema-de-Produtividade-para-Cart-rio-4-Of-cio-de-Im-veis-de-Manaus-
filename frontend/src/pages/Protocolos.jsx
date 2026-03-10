@@ -5,6 +5,7 @@ import "./Protocolos.css";
 import {
   addServicoAoProtocolo,
   concluirProtocolo,
+  concluirParcialProtocolo,
   createProtocolo,
   deleteProtocolo,
   getFuncionarios,
@@ -21,16 +22,18 @@ import {
 
 const statusLabel = (s) => {
   const sl = (s || "").toLowerCase();
-  if (sl === "andamento")           return "Em andamento";
+  if (sl === "andamento")                return "Em andamento";
   if (sl === "concluido" || sl === "concluído") return "Concluído";
-  if (sl === "cancelado")           return "Cancelado";
-  if (sl === "aguardando")          return "Aguardando";
+  if (sl === "concluido_parcial")        return "Conc. Parcial";
+  if (sl === "cancelado")                return "Cancelado";
+  if (sl === "aguardando")               return "Aguardando";
   return s;
 };
 
 const statusBadgeClass = (s) => {
   const sl = (s || "").toLowerCase();
   if (sl === "concluido" || sl === "concluído") return "badge-moderno badge-success-moderno";
+  if (sl === "concluido_parcial")   return "badge-moderno badge-parcial-moderno";
   if (sl === "cancelado")           return "badge-moderno badge-danger-moderno";
   if (sl === "aguardando")          return "badge-moderno badge-warning-moderno";
   return "badge-moderno badge-info-moderno";
@@ -88,7 +91,7 @@ const PRIORIDADE_CONFIG = {
 };
 
 const corLinha = (p) => {
-  if (["concluido","concluído","cancelado"].includes((p.status||"").toLowerCase())) return {};
+  if (["concluido","concluído","cancelado","concluido_parcial"].includes((p.status||"").toLowerCase())) return {};
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const venc = new Date(p.data_vencimento); venc.setHours(0, 0, 0, 0);
   const diff = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
@@ -976,13 +979,24 @@ export default function Protocolos({ usuario }) {
   };
 
   const concluir = async (id) => {
-    if (!window.confirm("Concluir este protocolo?")) return;
+    if (!window.confirm("Concluir DEFINITIVAMENTE este protocolo?\n\nEle ficará como concluído e não aparecerá mais na fila.")) return;
     setErro("");
     try {
       await concluirProtocolo(id);
       await carregar();
     } catch (e) {
       setErro(e?.message || "Erro ao concluir");
+    }
+  };
+
+  const concluirParcial = async (id) => {
+    if (!window.confirm("Concluir PARCIALMENTE este protocolo?\n\nA produtividade será registrada, mas o protocolo ficará disponível para um novo serviço.")) return;
+    setErro("");
+    try {
+      await concluirParcialProtocolo(id);
+      await carregar();
+    } catch (e) {
+      setErro(e?.message || "Erro ao concluir parcialmente");
     }
   };
 
@@ -1448,14 +1462,15 @@ export default function Protocolos({ usuario }) {
                           </button>
                         )}
                         {(p.status === "andamento" ||
-                          p.status === "concluido") && (
+                          p.status === "concluido" ||
+                          p.status === "concluido_parcial") && (
                           <button
                             className="btn-action btn-action-edit"
                             onClick={() => abrirModalServico(p)}
                             title={
-                              p.status === "concluido"
-                                ? "Adicionar Serviço (reabre o protocolo)"
-                                : "Adicionar Serviço"
+                              p.status === "andamento"
+                                ? "Adicionar Serviço"
+                                : "Adicionar Serviço (reabre o protocolo)"
                             }
                           >
                             +
@@ -1464,9 +1479,20 @@ export default function Protocolos({ usuario }) {
 
                         {p.status === "andamento" && (
                           <button
+                            className="btn-action"
+                            style={{ background: "#d1fae5", color: "#065f46", fontWeight: 700 }}
+                            onClick={() => concluirParcial(p.id)}
+                            title="Concluir Parcial (registra produtividade, protocolo fica disponível)"
+                          >
+                            ½
+                          </button>
+                        )}
+
+                        {p.status === "andamento" && (
+                          <button
                             className="btn-action btn-action-success"
                             onClick={() => concluir(p.id)}
-                            title="Concluir"
+                            title="Concluir Definitivo"
                           >
                             ✓
                           </button>
