@@ -673,7 +673,7 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Não é possível adicionar serviço em protocolo cancelado.' });
     }
 
-    if (protocolo.status === 'concluido') {
+    if (protocolo.status === 'concluido' || protocolo.status === 'concluido_parcial') {
       await client.query(
         `UPDATE protocolos
          SET status = 'andamento', data_conclusao = NULL
@@ -739,6 +739,39 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Erro ao adicionar serviço' });
   } finally {
     client.release();
+  }
+});
+
+// Concluir parcialmente (conta produtividade, protocolo fica disponível para novo serviço)
+router.patch('/:id/concluir-parcial', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.cargo === 'Registrador') {
+      const check = await pool.query('SELECT responsavel_id FROM protocolos WHERE id = $1', [id]);
+      if (check.rows.length === 0) return res.status(404).json({ message: 'Protocolo não encontrado' });
+      if (check.rows[0].responsavel_id != req.user.id)
+        return res.status(403).json({ message: 'Você só pode concluir seus próprios protocolos' });
+    }
+
+    const result = await pool.query(
+      `UPDATE protocolos SET status = 'concluido_parcial', data_conclusao = CURRENT_DATE
+       WHERE id = $1 AND status = 'andamento' RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Protocolo não encontrado ou não está em andamento' });
+
+    await pool.query(
+      'INSERT INTO historico (protocolo_id, usuario_id, acao, descricao) VALUES ($1, $2, $3, $4)',
+      [id, req.user.id, 'CONCLUSAO', `Conclusão parcial por ${req.user.email}`]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao concluir parcialmente:', error);
+    res.status(500).json({ message: 'Erro ao concluir parcialmente' });
   }
 });
 

@@ -6,10 +6,11 @@ const authH = () => ({ Authorization: `Bearer ${token()}` });
 const hojeISO = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_CONFIG = {
-  andamento:  { label: 'Em andamento', bg: '#dbeafe', cor: '#1d4ed8' },
-  concluido:  { label: 'Concluído',    bg: '#dcfce7', cor: '#15803d' },
-  aguardando: { label: 'Aguardando',   bg: '#fef9c3', cor: '#a16207' },
-  cancelado:  { label: 'Cancelado',    bg: '#fee2e2', cor: '#dc2626' },
+  andamento:         { label: 'Em andamento',  bg: '#dbeafe', cor: '#1d4ed8' },
+  concluido:         { label: 'Concluído',      bg: '#dcfce7', cor: '#15803d' },
+  concluido_parcial: { label: 'Conc. Parcial',  bg: '#e0f2fe', cor: '#0369a1' },
+  aguardando:        { label: 'Aguardando',     bg: '#fef9c3', cor: '#a16207' },
+  cancelado:         { label: 'Cancelado',      bg: '#fee2e2', cor: '#dc2626' },
 };
 
 function Badge({ status }) {

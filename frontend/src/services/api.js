@@ -2,7 +2,7 @@
 
 // frontend/src/services/api.js
 export const API_URL = 
-  import.meta.env.VITE_API_URL || "http://192.168.0.95:5000/api";
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 
 function getToken() {
@@ -115,6 +115,14 @@ export const addServicoAoProtocolo = async (protocoloId, { servico_id, renovarPr
 
 export const concluirProtocolo = async (id) => {
   const response = await fetch(`${API_URL}/protocolos/${id}/concluir`, {
+    method: 'PATCH',
+    headers: getAuthHeader(),
+  });
+  return handleResponse(response);
+};
+
+export const concluirParcialProtocolo = async (id) => {
+  const response = await fetch(`${API_URL}/protocolos/${id}/concluir-parcial`, {
     method: 'PATCH',
     headers: getAuthHeader(),
   });
@@ -364,6 +372,7 @@ export default {
   deleteProtocolo,
   addServicoAoProtocolo,
   concluirProtocolo,
+  concluirParcialProtocolo,
   addNota,
   getNotas,
   getHistorico,
