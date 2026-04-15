@@ -706,7 +706,12 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
     let novaData = dataVencimentoAtual.toISOString().split('T')[0];
 
     if (renovarPrazo) {
-      const recalculada = await calcularDataVencimento(protocolo.data_entrada, servico.prazo, servico.tipo_prazo);
+      const hoje = new Date().toISOString().split('T')[0];
+      const recalculada = await calcularDataVencimento(
+        hoje,
+        servico.prazo,
+        servico.tipo_prazo
+       );
       const dataAtual = new Date(novaData);
       const dataRecalculada = new Date(recalculada);
 
