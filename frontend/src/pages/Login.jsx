@@ -1,97 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { login } from '../services/api';
 import '../styles/Login.css';
 import logo from '../styles/img/logo.png';
 
-// Homenagem ao Dia das Mães — ativa permanentemente
-const IS_WOMENS_MONTH = true;
-
-// Pétalas flutuantes
-const PETALS = Array.from({ length: 18 }, (_, i) => ({
+const PETALS = Array.from({ length: 22 }, (_, i) => ({
   id: i,
-  left: `${Math.random() * 100}%`,
-  delay: `${Math.random() * 8}s`,
-  duration: `${6 + Math.random() * 6}s`,
-  size: `${10 + Math.random() * 16}px`,
-  opacity: 0.4 + Math.random() * 0.5,
-  rotate: `${Math.random() * 360}deg`,
+  left:     `${Math.random() * 100}%`,
+  delay:    `${Math.random() * 10}s`,
+  duration: `${7 + Math.random() * 7}s`,
+  size:     `${14 + Math.random() * 18}px`,
+  opacity:  0.5 + Math.random() * 0.4,
+  swing:    `${20 + Math.random() * 40}px`,
+  emoji:    ['🌹','🌸','🌺','💐','🪷'][Math.floor(Math.random() * 5)],
 }));
 
-function Petal({ left, delay, duration, size, opacity, rotate }) {
+function Petal({ left, delay, duration, size, opacity, swing, emoji }) {
   return (
     <div style={{
-      position: 'fixed',
-      left,
-      top: '-30px',
-      width: size,
-      height: size,
-      opacity,
-      animation: `petalFall ${duration} ${delay} infinite linear`,
-      pointerEvents: 'none',
-      zIndex: 0,
-      transform: `rotate(${rotate})`,
-      fontSize: size,
-      userSelect: 'none',
+      position: 'fixed', left, top: '-40px',
+      fontSize: size, opacity,
+      animation: `petalFall ${duration} ${delay} infinite ease-in-out`,
+      pointerEvents: 'none', zIndex: 0, userSelect: 'none',
+      '--swing': swing,
     }}>
-      🌷
+      {emoji}
     </div>
   );
 }
 
 function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState('');
+  const [email, setEmail]       = useState('');
+  const [senha, setSenha]       = useState('');
+  const [erro, setErro]         = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [showTribute, setShowTribute] = useState(IS_WOMENS_MONTH);
+  const [fechou, setFechou]     = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErro('');
-    setCarregando(true);
+    setErro(''); setCarregando(true);
     try {
-      const response = await login(email, senha);
-      onLogin(response.token, response.usuario);
-    } catch (error) {
-      setErro(error.message || 'Erro ao fazer login');
-    } finally {
-      setCarregando(false);
-    }
+      const r = await login(email, senha);
+      onLogin(r.token, r.usuario);
+    } catch (err) {
+      setErro(err.message || 'Erro ao fazer login');
+    } finally { setCarregando(false); }
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+        * { box-sizing: border-box; }
 
         @keyframes petalFall {
-          0%   { transform: translateY(-30px) rotate(0deg) translateX(0); opacity: 0; }
+          0%   { transform: translateY(-40px) translateX(0) rotate(0deg);   opacity: 0; }
           10%  { opacity: 1; }
-          90%  { opacity: 0.8; }
-          100% { transform: translateY(110vh) rotate(720deg) translateX(40px); opacity: 0; }
+          50%  { transform: translateY(45vh)  translateX(var(--swing, 30px)) rotate(180deg); }
+          90%  { opacity: 0.7; }
+          100% { transform: translateY(105vh) translateX(0) rotate(360deg); opacity: 0; }
         }
 
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(24px); }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(32px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position: 200% center; }
+        @keyframes shimmerGold {
+          0%   { background-position: -300% center; }
+          100% { background-position: 300% center; }
         }
 
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(219, 39, 119, 0.15); }
-          50%       { box-shadow: 0 0 0 12px rgba(219, 39, 119, 0); }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(212,167,100,0.2), 0 0 30px rgba(180,60,90,0.15); }
+          50%       { box-shadow: 0 0 0 14px rgba(212,167,100,0), 0 0 50px rgba(180,60,90,0.25); }
         }
 
-        @keyframes ribbonSlide {
-          from { transform: translateX(-100%); opacity: 0; }
-          to   { transform: translateX(0); opacity: 1; }
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          15%       { transform: scale(1.15); }
+          30%       { transform: scale(1); }
+          45%       { transform: scale(1.08); }
         }
 
-        .wm-login-container {
+        @keyframes ribbonIn {
+          from { transform: translateY(-20px); opacity: 0; }
+          to   { transform: translateY(0);     opacity: 1; }
+        }
+
+        @keyframes orbFloat {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50%       { transform: translateY(-30px) scale(1.05); }
+        }
+
+        .dm-login-wrap {
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -99,182 +101,232 @@ function Login({ onLogin }) {
           position: relative;
           overflow: hidden;
           font-family: 'DM Sans', sans-serif;
-          background: linear-gradient(135deg, #1a0a14 0%, #2d0a22 40%, #1a0510 70%, #0d0a1a 100%);
+          background:
+            radial-gradient(ellipse at 20% 20%, rgba(180,50,80,0.35) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 80%, rgba(140,40,70,0.28) 0%, transparent 55%),
+            radial-gradient(ellipse at 50% 50%, rgba(100,20,45,0.4) 0%, transparent 70%),
+            linear-gradient(160deg, #1c0610 0%, #3a0e22 35%, #240910 65%, #120408 100%);
         }
 
-        .wm-bg-orbs {
-          position: fixed; inset: 0; pointer-events: none; z-index: 0;
-        }
-        .wm-orb {
-          position: absolute;
+        /* Orbs decorativos */
+        .dm-orb {
+          position: fixed;
           border-radius: 50%;
-          filter: blur(80px);
+          pointer-events: none;
+          z-index: 0;
+          filter: blur(90px);
         }
-        .wm-orb-1 {
-          width: 500px; height: 500px;
-          background: radial-gradient(circle, rgba(219,39,119,0.18) 0%, transparent 70%);
-          top: -100px; left: -100px;
+        .dm-orb-1 {
+          width: 560px; height: 560px;
+          background: radial-gradient(circle, rgba(212,100,130,0.22) 0%, transparent 70%);
+          top: -150px; left: -150px;
+          animation: orbFloat 8s ease-in-out infinite;
         }
-        .wm-orb-2 {
-          width: 400px; height: 400px;
-          background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%);
-          bottom: -80px; right: -80px;
+        .dm-orb-2 {
+          width: 420px; height: 420px;
+          background: radial-gradient(circle, rgba(212,167,100,0.15) 0%, transparent 70%);
+          bottom: -100px; right: -100px;
+          animation: orbFloat 10s ease-in-out infinite reverse;
         }
-        .wm-orb-3 {
-          width: 300px; height: 300px;
-          background: radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%);
-          top: 40%; left: 60%;
+        .dm-orb-3 {
+          width: 280px; height: 280px;
+          background: radial-gradient(circle, rgba(236,100,140,0.12) 0%, transparent 70%);
+          top: 45%; left: 65%;
+          animation: orbFloat 7s ease-in-out infinite 2s;
         }
 
-        .wm-card {
+        /* Linha dourada decorativa */
+        .dm-gold-line {
+          position: fixed;
+          top: 0; bottom: 0;
+          left: 50%;
+          width: 1px;
+          background: linear-gradient(180deg, transparent, rgba(212,167,100,0.08) 30%, rgba(212,167,100,0.12) 50%, rgba(212,167,100,0.08) 70%, transparent);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .dm-card {
           position: relative;
           z-index: 10;
           width: 100%;
-          max-width: 420px;
+          max-width: 430px;
           margin: 1.5rem;
-          animation: fadeSlideUp 0.7s ease both;
+          animation: fadeUp 0.75s cubic-bezier(0.22,1,0.36,1) both;
         }
 
-        /* Faixa de homenagem */
-        .wm-tribute {
-          background: linear-gradient(135deg, #831843, #be185d, #db2777, #be185d, #831843);
-          background-size: 200% auto;
-          animation: shimmer 4s linear infinite, ribbonSlide 0.6s ease both;
-          border-radius: 16px 16px 0 0;
-          padding: 1.25rem 1.5rem;
+        /* Banner homenagem */
+        .dm-banner {
+          border-radius: 20px 20px 0 0;
+          padding: 1.5rem 1.75rem 1.25rem;
           text-align: center;
           position: relative;
           overflow: hidden;
+          animation: ribbonIn 0.6s 0.3s ease both;
+          background: linear-gradient(
+            135deg,
+            #6b1530 0%, #9b2345 20%, #c4375a 40%,
+            #d4876a 50%, #c4375a 60%, #9b2345 80%, #6b1530 100%
+          );
+          background-size: 300% auto;
+          animation: ribbonIn 0.6s 0.3s ease both, shimmerGold 6s linear infinite;
+          border-bottom: 1px solid rgba(212,167,100,0.3);
         }
-        .wm-tribute::before {
+        .dm-banner::before {
           content: '';
           position: absolute; inset: 0;
-          background: repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 10px,
-            rgba(255,255,255,0.03) 10px,
-            rgba(255,255,255,0.03) 20px
-          );
+          background:
+            repeating-linear-gradient(
+              45deg,
+              transparent, transparent 12px,
+              rgba(255,255,255,0.025) 12px,
+              rgba(255,255,255,0.025) 24px
+            );
         }
-        .wm-tribute-emoji {
-          font-size: 1.5rem;
-          display: block;
-          margin-bottom: 0.25rem;
-        }
-        .wm-tribute-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #fff;
-          letter-spacing: 0.5px;
-          margin: 0;
-        }
-        .wm-tribute-sub {
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.8);
-          margin: 0.2rem 0 0;
-          font-style: italic;
-        }
-        .wm-tribute-close {
+        .dm-banner::after {
+          content: '';
           position: absolute;
-          top: 0.5rem; right: 0.75rem;
-          background: rgba(255,255,255,0.15);
-          border: none;
-          color: white;
+          bottom: 0; left: 10%; right: 10%; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(212,167,100,0.6), transparent);
+        }
+
+        .dm-heart {
+          font-size: 2rem;
+          display: block;
+          margin-bottom: 0.4rem;
+          animation: heartbeat 2s ease-in-out infinite;
+          filter: drop-shadow(0 2px 12px rgba(255,100,120,0.5));
+        }
+        .dm-banner-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.45rem;
+          font-weight: 700;
+          font-style: italic;
+          color: #fff;
+          margin: 0 0 0.3rem;
+          text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+          letter-spacing: 0.5px;
+        }
+        .dm-banner-quote {
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.85);
+          margin: 0;
+          font-style: italic;
+          line-height: 1.5;
+          letter-spacing: 0.2px;
+        }
+        .dm-banner-flowers {
+          font-size: 1.1rem;
+          margin-top: 0.6rem;
+          display: block;
+          letter-spacing: 0.3rem;
+          filter: drop-shadow(0 2px 6px rgba(255,180,180,0.4));
+        }
+        .dm-banner-close {
+          position: absolute;
+          top: 0.6rem; right: 0.75rem;
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: rgba(255,255,255,0.7);
           border-radius: 50%;
-          width: 22px; height: 22px;
-          font-size: 0.7rem;
+          width: 24px; height: 24px;
+          font-size: 0.65rem;
           cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          transition: background 0.2s;
+          transition: all 0.2s;
         }
-        .wm-tribute-close:hover { background: rgba(255,255,255,0.3); }
+        .dm-banner-close:hover {
+          background: rgba(255,255,255,0.25);
+          color: white;
+        }
 
-        /* Card principal */
-        .wm-main {
-          background: rgba(255,255,255,0.04);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.08);
+        /* Card formulário */
+        .dm-form-card {
+          background: rgba(255,255,255,0.035);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255,255,255,0.07);
           border-top: none;
-          border-radius: ${IS_WOMENS_MONTH ? '0 0 20px 20px' : '20px'};
+          border-radius: 0 0 22px 22px;
           padding: 2rem 2rem 1.5rem;
         }
-        .wm-main-solo {
-          border-radius: 20px;
-          border-top: 1px solid rgba(255,255,255,0.08);
+        .dm-form-card.solo {
+          border-radius: 22px;
+          border-top: 1px solid rgba(255,255,255,0.07);
         }
 
-        .wm-logo-wrap {
+        .dm-logo-area {
           display: flex;
           flex-direction: column;
           align-items: center;
+          gap: 0.875rem;
           margin-bottom: 1.5rem;
-          gap: 0.75rem;
         }
-        .wm-logo {
-          width: 64px; height: 64px;
+        .dm-logo {
+          width: 68px; height: 68px;
           object-fit: contain;
-          filter: drop-shadow(0 0 20px rgba(236,72,153,0.4));
-          animation: pulseGlow 3s ease-in-out infinite;
-          border-radius: 12px;
+          border-radius: 16px;
+          padding: 6px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(212,167,100,0.2);
+          animation: glowPulse 4s ease-in-out infinite;
         }
-        .wm-title {
+        .dm-logo-title {
           font-family: 'Playfair Display', serif;
-          font-size: 1.25rem;
+          font-size: 1.2rem;
           font-weight: 600;
-          color: #f9fafb;
+          color: #f5e6d3;
           text-align: center;
           margin: 0;
           line-height: 1.3;
         }
-        .wm-subtitle {
-          font-size: 0.8rem;
-          color: rgba(255,255,255,0.45);
+        .dm-logo-sub {
+          font-size: 0.72rem;
+          color: rgba(255,255,255,0.35);
           text-align: center;
-          margin: 0.2rem 0 0;
-          letter-spacing: 0.5px;
+          margin: 0.15rem 0 0;
+          letter-spacing: 1px;
           text-transform: uppercase;
         }
 
-        .wm-divider {
+        .dm-divider {
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(219,39,119,0.4), transparent);
+          background: linear-gradient(90deg, transparent, rgba(212,167,100,0.35), transparent);
           margin: 0 0 1.5rem;
         }
 
-        .wm-field { margin-bottom: 1rem; }
-        .wm-label {
+        .dm-label {
           display: block;
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: rgba(255,255,255,0.5);
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: rgba(245,230,211,0.45);
           text-transform: uppercase;
-          letter-spacing: 0.8px;
+          letter-spacing: 1px;
           margin-bottom: 0.4rem;
         }
-        .wm-input {
+        .dm-input {
           width: 100%;
-          box-sizing: border-box;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 10px;
-          padding: 0.75rem 1rem;
-          color: #f9fafb;
+          padding: 0.8rem 1rem;
+          color: #f5e6d3;
           font-size: 0.9rem;
           font-family: 'DM Sans', sans-serif;
           outline: none;
-          transition: border-color 0.2s, background 0.2s;
+          transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+          margin-bottom: 1rem;
         }
-        .wm-input::placeholder { color: rgba(255,255,255,0.2); }
-        .wm-input:focus {
-          border-color: rgba(219,39,119,0.6);
-          background: rgba(255,255,255,0.08);
+        .dm-input::placeholder { color: rgba(255,255,255,0.18); }
+        .dm-input:focus {
+          border-color: rgba(212,167,100,0.5);
+          background: rgba(255,255,255,0.07);
+          box-shadow: 0 0 0 3px rgba(212,167,100,0.08);
         }
 
-        .wm-alert {
-          background: rgba(220,38,38,0.15);
-          border: 1px solid rgba(220,38,38,0.3);
+        .dm-alert {
+          background: rgba(220,38,38,0.12);
+          border: 1px solid rgba(220,38,38,0.25);
           border-radius: 8px;
           padding: 0.625rem 0.875rem;
           color: #fca5a5;
@@ -282,111 +334,108 @@ function Login({ onLogin }) {
           margin-bottom: 1rem;
         }
 
-        .wm-btn {
+        .dm-btn {
           width: 100%;
-          padding: 0.875rem;
+          padding: 0.9rem;
           border: none;
           border-radius: 10px;
           font-family: 'DM Sans', sans-serif;
           font-size: 0.95rem;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
-          margin-top: 0.5rem;
-          transition: opacity 0.2s, transform 0.1s;
-          background: linear-gradient(135deg, #9d174d, #db2777, #ec4899);
-          color: white;
-          letter-spacing: 0.3px;
+          margin-top: 0.25rem;
+          letter-spacing: 0.5px;
+          transition: all 0.25s;
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(
+            135deg,
+            #7c1a35 0%, #b03050 30%, #c84060 50%, #d4876a 70%, #b03050 85%, #7c1a35 100%
+          );
+          background-size: 250% auto;
+          color: #fff5ee;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 20px rgba(180,50,80,0.35), 0 1px 0 rgba(255,255,255,0.1) inset;
+          animation: shimmerGold 5s linear infinite;
         }
-        .wm-btn:hover:not(:disabled) {
-          opacity: 0.92;
-          transform: translateY(-1px);
+        .dm-btn:hover:not(:disabled) {
+          background-size: 180% auto;
+          box-shadow: 0 6px 28px rgba(180,50,80,0.5), 0 1px 0 rgba(255,255,255,0.15) inset;
+          transform: translateY(-2px);
         }
-        .wm-btn:active:not(:disabled) { transform: translateY(0); }
-        .wm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .dm-btn:active:not(:disabled) { transform: translateY(0); }
+        .dm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .wm-footer {
+        .dm-footer {
           text-align: center;
-          margin-top: 1.25rem;
-          font-size: 0.72rem;
-          color: rgba(255,255,255,0.25);
-          line-height: 1.5;
+          margin-top: 1.5rem;
+          font-size: 0.7rem;
+          color: rgba(255,255,255,0.2);
+          line-height: 1.6;
         }
+        .dm-footer strong { color: rgba(212,167,100,0.5); }
       `}</style>
 
-      <div className="wm-login-container">
-        {/* Orbs de fundo */}
-        <div className="wm-bg-orbs">
-          <div className="wm-orb wm-orb-1" />
-          <div className="wm-orb wm-orb-2" />
-          <div className="wm-orb wm-orb-3" />
-        </div>
+      <div className="dm-login-wrap">
+        <div className="dm-orb dm-orb-1"/>
+        <div className="dm-orb dm-orb-2"/>
+        <div className="dm-orb dm-orb-3"/>
+        <div className="dm-gold-line"/>
 
         {/* Pétalas flutuantes */}
-        {IS_WOMENS_MONTH && PETALS.map(p => <Petal key={p.id} {...p} />)}
+        {PETALS.map(p => <Petal key={p.id} {...p}/>)}
 
-        <div className="wm-card">
-          {/* Faixa homenagem */}
-          {showTribute && (
-            <div className="wm-tribute">
-              <span className="wm-tribute-emoji">🌷 💕 🌸</span>
-              <p className="wm-tribute-title">Feliz Dia das Mães!</p>
-              <p className="wm-tribute-sub">
-                Em homenagem a todas as mães incríveis do nosso cartório ❤️
+        <div className="dm-card">
+
+          {/* Banner Dia das Mães */}
+          {!fechou && (
+            <div className="dm-banner">
+              <button className="dm-banner-close" onClick={() => setFechou(true)} title="Fechar">✕</button>
+              <span className="dm-heart">💝</span>
+              <p className="dm-banner-title">Feliz Dia das Mães!</p>
+              <p className="dm-banner-quote">
+                "O amor de mãe é o único amor que antecede o nascimento<br/>
+                e não termina com a morte."
               </p>
-              <button className="wm-tribute-close" onClick={() => setShowTribute(false)} title="Fechar">✕</button>
+              <span className="dm-banner-flowers">🌹 🌸 🪷 🌸 🌹</span>
             </div>
           )}
 
           {/* Card do formulário */}
-          <div className={`wm-main ${!showTribute ? 'wm-main-solo' : ''}`}>
-            <div className="wm-logo-wrap">
-              <img src={logo} alt="Logo Cartório" className="wm-logo" />
+          <div className={`dm-form-card${fechou ? ' solo' : ''}`}>
+            <div className="dm-logo-area">
+              <img src={logo} alt="Logo Cartório" className="dm-logo"/>
               <div>
-                <h1 className="wm-title">Cartório 1º Ofício — AM</h1>
-                <p className="wm-subtitle">Sistema de Produtividade</p>
+                <h1 className="dm-logo-title">Cartório 1º Ofício — AM</h1>
+                <p className="dm-logo-sub">Sistema de Produtividade</p>
               </div>
             </div>
 
-            <div className="wm-divider" />
+            <div className="dm-divider"/>
 
-            {erro && <div className="wm-alert">⚠️ {erro}</div>}
+            {erro && <div className="dm-alert">⚠️ {erro}</div>}
 
             <form onSubmit={handleSubmit}>
-              <div className="wm-field">
-                <label className="wm-label" htmlFor="email">E-mail</label>
-                <input
-                  className="wm-input"
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div className="wm-field">
-                <label className="wm-label" htmlFor="senha">Senha</label>
-                <input
-                  className="wm-input"
-                  type="password"
-                  id="senha"
-                  value={senha}
-                  onChange={e => setSenha(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <button className="wm-btn" type="submit" disabled={carregando}>
+              <label className="dm-label" htmlFor="email">E-mail</label>
+              <input
+                className="dm-input" type="email" id="email"
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com" required autoFocus
+              />
+              <label className="dm-label" htmlFor="senha">Senha</label>
+              <input
+                className="dm-input" type="password" id="senha"
+                value={senha} onChange={e => setSenha(e.target.value)}
+                placeholder="••••••••" required
+              />
+              <button className="dm-btn" type="submit" disabled={carregando}>
                 {carregando ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
 
-            <div className="wm-footer">
-              <p><strong>Versão 1.0</strong> · Cartório 1º Ofício de Imóveis de Manaus<br />
-              Desenvolvedor: Michael Oliveira</p>
+            <div className="dm-footer">
+              <strong>Versão 1.0</strong> · Cartório 1º Ofício de Imóveis de Manaus<br/>
+              Desenvolvedor: Michael Oliveira
             </div>
           </div>
         </div>
