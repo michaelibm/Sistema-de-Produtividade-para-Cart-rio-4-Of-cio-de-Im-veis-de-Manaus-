@@ -1,0 +1,17 @@
+@keyframes piscar-vermelho {
+  0%, 100% { background-color: #fef2f2; color: #ef4444; opacity: 1; }
+  50%       { background-color: #fecaca; color: #b91c1c; opacity: 0.65; }
+}
+
+.prazo-vence-hoje {
+  animation: piscar-vermelho 1s ease-in-out infinite;
+  border-radius: 6px;
+  padding: 2px 6px;
+  display: inline-block;
+}
+
+.prazo-vence-hoje-cell {
+  animation: piscar-vermelho 1s ease-in-out infinite;
+  border-radius: 8px;
+  padding: 4px 8px;
+}

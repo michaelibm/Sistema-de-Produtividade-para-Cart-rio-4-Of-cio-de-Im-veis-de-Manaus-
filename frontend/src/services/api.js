@@ -361,6 +361,67 @@ export const getSessoesAtivas = async () => {
   return handleResponse(response);
 };
 
+// USUCAPIÃO
+export const getNotasUsucapiao = async (id) => {
+  const response = await fetch(`${API_URL}/usucapiao/${id}/notas`, { headers: getAuthHeader() });
+  return handleResponse(response);
+};
+
+export const addNotaUsucapiao = async (id, nota) => {
+  const response = await fetch(`${API_URL}/usucapiao/${id}/notas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify({ nota }),
+  });
+  return handleResponse(response);
+};
+
+export const registrarEmailUsucapiao = async (id, tipo) => {
+  const response = await fetch(`${API_URL}/usucapiao/${id}/registrar-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify({ tipo }),
+  });
+  return handleResponse(response);
+};
+
+export const getUsucapiao = async (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') params.append(key, value);
+  });
+  const response = await fetch(`${API_URL}/usucapiao?${params.toString()}`, {
+    headers: getAuthHeader(),
+  });
+  return handleResponse(response);
+};
+
+export const createUsucapiao = async (dados) => {
+  const response = await fetch(`${API_URL}/usucapiao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify(dados),
+  });
+  return handleResponse(response);
+};
+
+export const updateUsucapiao = async (id, dados) => {
+  const response = await fetch(`${API_URL}/usucapiao/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    body: JSON.stringify(dados),
+  });
+  return handleResponse(response);
+};
+
+export const deleteUsucapiao = async (id) => {
+  const response = await fetch(`${API_URL}/usucapiao/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeader(),
+  });
+  return handleResponse(response);
+};
+
 // Export default
 export default {
   login,

@@ -23,6 +23,9 @@ const statusRoutes = require('./routes/status-routes');
 // ✅ ADICIONAR ROTA DE ALERTAS
 const alertasRoutes = require('./routes/alertas-routes');
 
+// ✅ USUCAPIÃO
+const usucapiaoRoutes = require('./routes/usucapiao');
+
 // ✅ PAINEL PÚBLICO (sem autenticação)
 const painelRoutes = require('./routes/painel');
 
@@ -36,6 +39,9 @@ app.use('/api/status', statusRoutes);
 
 // ✅ REGISTRAR ROTA DE ALERTAS
 app.use('/api/alertas', alertasRoutes);
+
+// ✅ REGISTRAR USUCAPIÃO
+app.use('/api/usucapiao', usucapiaoRoutes);
 
 // ✅ REGISTRAR PAINEL PÚBLICO
 app.use('/api/painel', painelRoutes);
