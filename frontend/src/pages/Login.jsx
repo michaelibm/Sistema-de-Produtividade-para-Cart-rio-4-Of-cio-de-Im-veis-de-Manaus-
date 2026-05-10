@@ -3,7 +3,7 @@ import { login } from '../services/api';
 import '../styles/Login.css';
 import logo from '../styles/img/logo.png';
 
-// Homenagem ao Mês das Mulheres — ativa permanentemente
+// Homenagem ao Dia das Mães — ativa permanentemente
 const IS_WOMENS_MONTH = true;
 
 // Pétalas flutuantes
@@ -33,7 +33,7 @@ function Petal({ left, delay, duration, size, opacity, rotate }) {
       fontSize: size,
       userSelect: 'none',
     }}>
-      🌸
+      🌷
     </div>
   );
 }
@@ -328,10 +328,10 @@ function Login({ onLogin }) {
           {/* Faixa homenagem */}
           {showTribute && (
             <div className="wm-tribute">
-              <span className="wm-tribute-emoji">🌸 💜 🌺</span>
-              <p className="wm-tribute-title">Feliz Mês das Mulheres</p>
+              <span className="wm-tribute-emoji">🌷 💕 🌸</span>
+              <p className="wm-tribute-title">Feliz Dia das Mães!</p>
               <p className="wm-tribute-sub">
-                Em homenagem a todas as mulheres incríveis do nosso cartório
+                Em homenagem a todas as mães incríveis do nosso cartório ❤️
               </p>
               <button className="wm-tribute-close" onClick={() => setShowTribute(false)} title="Fechar">✕</button>
             </div>
