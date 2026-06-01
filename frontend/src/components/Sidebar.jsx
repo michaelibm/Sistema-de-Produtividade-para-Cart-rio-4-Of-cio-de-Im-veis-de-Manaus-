@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../styles/img/logo.png';
 
@@ -21,6 +21,7 @@ function Sidebar({ usuario, onLogout, onToggle }) {
     { path: '/', icon: '🎫', label: 'Balcão de Atendimento', color: '#f59e0b', roles: ['Atendente'] },
     { path: '/servicos', icon: '⚙️', label: 'Tipos de Serviço', color: '#10b981', roles: ['Supervisor', 'Coordenador'] },
     { path: '/usucapiao', icon: '🏡', label: 'Usucapião', color: '#6366f1', roles: ['Supervisor', 'Coordenador', 'Registrador'] },
+    { path: '/minha-produtividade', icon: '⚡', label: 'Minha Produtividade', color: '#f59e0b', roles: ['Registrador'] },
     { path: '/historico', icon: '📜', label: 'Histórico', color: '#10b981', roles: ['Supervisor', 'Coordenador', 'Registrador'] },
     { path: '/relatorios', icon: '📈', label: 'Relatórios', color: '#06b6d4', roles: ['Supervisor', 'Coordenador'] },
     { path: '/funcionarios', icon: '👥', label: 'Funcionários', color: '#f59e0b', roles: ['Supervisor'] },

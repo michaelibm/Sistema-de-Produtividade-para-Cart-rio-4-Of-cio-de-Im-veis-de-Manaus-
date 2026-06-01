@@ -431,6 +431,15 @@ export const deleteUsucapiao = async (id) => {
   return handleResponse(response);
 };
 
+export const getMinhaProductividade = async (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([k, v]) => { if (v) params.append(k, v); });
+  const response = await fetch(`${API_URL}/protocolos/minha-produtividade?${params}`, {
+    headers: getAuthHeader(),
+  });
+  return handleResponse(response);
+};
+
 // Export default
 export default {
   login,

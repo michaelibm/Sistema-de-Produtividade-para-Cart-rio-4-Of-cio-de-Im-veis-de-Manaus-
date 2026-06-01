@@ -13,6 +13,7 @@ import FilaAtendimento from './pages/FilaAtendimento';
 import FilaRegistrador from './pages/FilaRegistrador';
 import Historico from './pages/Historico';
 import Usucapiao from './pages/Usucapiao';
+import MinhaProductividade from './pages/MinhaProductividade';
 
 import Sidebar from './components/Sidebar';
 import './styles/App.css';
@@ -106,6 +107,7 @@ function App() {
             <Route path="/funcionarios" element={<Funcionarios usuario={usuario} />} />
             <Route path="/historico" element={<Historico usuario={usuario} />} />
             <Route path="/usucapiao" element={<Usucapiao usuario={usuario} />} />
+            <Route path="/minha-produtividade" element={<MinhaProductividade usuario={usuario} />} />
             <Route path="/relatorios" element={<Relatorios usuario={usuario} />} />
             <Route path="/configuracoes" element={<Configuracoes usuario={usuario} />} />
             <Route path="/painel" element={<Painel />} />

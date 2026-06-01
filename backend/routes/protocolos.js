@@ -215,6 +215,41 @@ router.get('/historico-producao', authMiddleware, async (req, res) => {
   }
 });
 
+// Minha Produtividade
+router.get('/minha-produtividade', authMiddleware, async (req, res) => {
+  try {
+    const { periodo, data_inicio, data_fim } = req.query;
+    const params = [req.user.id];
+    let dateFilter = '';
+    let i = 2;
+
+    if (periodo === 'hoje') {
+      dateFilter = ` AND (p.data_entrada AT TIME ZONE 'America/Manaus')::date = (NOW() AT TIME ZONE 'America/Manaus')::date`;
+    } else if (periodo === 'semana') {
+      dateFilter = ` AND p.data_entrada >= date_trunc('week', NOW() AT TIME ZONE 'America/Manaus')`;
+    } else if (periodo === 'mes') {
+      dateFilter = ` AND p.data_entrada >= date_trunc('month', NOW() AT TIME ZONE 'America/Manaus')`;
+    } else if (data_inicio && data_fim) {
+      dateFilter = ` AND p.data_entrada::date >= $${i}::date AND p.data_entrada::date <= $${i+1}::date`;
+      params.push(data_inicio, data_fim); i += 2;
+    }
+
+    const result = await pool.query(`
+      SELECT p.id, p.numero, p.status, p.data_entrada, p.data_vencimento, p.data_conclusao,
+             s.nome as servico_nome
+      FROM protocolos p
+      JOIN servicos s ON p.servico_id = s.id
+      WHERE p.responsavel_id = $1${dateFilter}
+      ORDER BY p.data_entrada DESC
+    `, params);
+
+    const grupos = { aguardando: [], em_andamento: [], concluido: [], cancelado: [] };
+    result.rows.forEach(p => { if (grupos[p.status]) grupos[p.status].push(p); });
+
+    res.json({ total: result.rows.length, grupos });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // Buscar protocolo por ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
