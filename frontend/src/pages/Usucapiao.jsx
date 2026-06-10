@@ -67,8 +67,9 @@ const PrazoCell = ({ data }) => {
 };
 
 // Card de prazo no painel detalhe
-const PrazoCard = ({ label, data, aviso }) => {
-  const st = data ? prazoSt(data) : null;
+// noStatus=true → mostra data em preto sem indicador de prazo (usado quando outro prazo assumiu)
+const PrazoCard = ({ label, data, aviso, noStatus }) => {
+  const st = (data && !noStatus) ? prazoSt(data) : null;
   return (
     <div style={{ background:'#f8fafc', borderRadius:'8px', padding:'0.625rem 0.75rem' }}>
       <div style={{ fontSize:'0.72rem', fontWeight:600, color:'#94a3b8', textTransform:'uppercase', marginBottom:'0.2rem' }}>{label}</div>
@@ -470,7 +471,7 @@ Portanto, com fulcro no art. 406, §2.º, do Provimento nº 149/2023-CNJ c/c art
 
                   {/* Cards de prazos */}
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                    <PrazoCard label="Entrada" data={detalhe.data_entrada ? detalhe.data_entrada.split('T')[0] : null}/>
+                    <PrazoCard label="Entrada" data={detalhe.data_entrada ? detalhe.data_entrada.split('T')[0] : null} noStatus={!!detalhe.data_envio_cliente}/>
                     <div style={{ background:'#f8fafc', borderRadius:'8px', padding:'0.625rem 0.75rem' }}>
                       <div style={{ fontSize:'0.72rem', fontWeight:600, color:'#94a3b8', textTransform:'uppercase', marginBottom:'0.2rem' }}>Responsável</div>
                       <div style={{ fontWeight:600, color:'#1e293b', fontSize:'0.875rem' }}>{detalhe.responsavel_analise || '—'}</div>
