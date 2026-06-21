@@ -797,7 +797,7 @@ Portanto, com fulcro no art. 406, §2.º, do Provimento nº 149/2023-CNJ c/c art
             {/* Rodapé */}
             <div style={{ padding:'1rem 1.75rem', borderTop:'1px solid #e2e8f0', display:'flex', gap:'0.75rem', justifyContent:'flex-end', background:'#f8fafc', flexShrink:0 }}>
               <div style={{ flex:1, fontSize:'0.78rem', color:'#64748b', alignSelf:'center' }}>
-                Enviando como <strong>registros@1rimanaus.com.br</strong> via SMTP
+                Enviando via SMTP configurado
               </div>
               <button onClick={() => setEmailModal(null)} style={{ padding:'0.7rem 1.5rem', border:'1px solid #e2e8f0', borderRadius:'10px', background:'white', cursor:'pointer', fontWeight:600, color:'#475569', fontSize:'0.9rem' }}>
                 Cancelar

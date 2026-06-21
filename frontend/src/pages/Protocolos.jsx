@@ -1242,7 +1242,7 @@ export default function Protocolos({ usuario }) {
         {/* Relógio de Manaus */}
         <div style={{ background: 'white', borderRadius: '10px', padding: '0.625rem 1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'right', borderLeft: '4px solid #3b82f6', alignSelf: 'flex-start' }}>
           <div style={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.125rem' }}>
-            🕐 Manaus (UTC-4)
+            🕐 Horário Local
           </div>
           <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1f2937', fontVariantNumeric: 'tabular-nums' }}>
             {formatarDataHoraManaus(horaAtual)}

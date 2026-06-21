@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { login } from '../services/api';
 import '../styles/Login.css';
-import logo from '../styles/img/logo.png';
+
 
 const BALLS = Array.from({ length: 20 }, (_, i) => ({
   id: i,
@@ -399,10 +399,10 @@ function Login({ onLogin }) {
           {/* Card do formulário */}
           <div className={`dm-form-card${fechou ? ' solo' : ''}`}>
             <div className="dm-logo-area">
-              <img src={logo} alt="Logo Cartório" className="dm-logo"/>
+              <div style={{ width:'52px', height:'52px', borderRadius:'14px', background:'linear-gradient(135deg,#6366f1,#4f46e5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.6rem', flexShrink:0 }}>📋</div>
               <div>
-                <h1 className="dm-logo-title">Cartório 1º Ofício — AM</h1>
-                <p className="dm-logo-sub">Sistema de Produtividade</p>
+                <h1 className="dm-logo-title">Sistema de Gestão Cartorial</h1>
+                <p className="dm-logo-sub">Controle de Produtividade</p>
               </div>
             </div>
 
@@ -429,7 +429,7 @@ function Login({ onLogin }) {
             </form>
 
             <div className="dm-footer">
-              <strong>Versão 1.0</strong> · Cartório 1º Ofício de Imóveis de Manaus<br/>
+              <strong>Versão 1.0</strong> · Sistema de Gestão Cartorial<br/>
               Desenvolvedor: Michael Oliveira
             </div>
           </div>

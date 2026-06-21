@@ -399,7 +399,7 @@ function Dashboard() {
         {/* Relógio de Manaus */}
         <div style={{ background: 'white', borderRadius: '12px', padding: '0.75rem 1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'right', borderLeft: '4px solid #3b82f6' }}>
           <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.125rem' }}>
-            🕐 Manaus (UTC-4)
+            🕐 Horário Local
           </div>
           <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1f2937', fontVariantNumeric: 'tabular-nums' }}>
             {formatarDataHoraManaus(horaAtual)}

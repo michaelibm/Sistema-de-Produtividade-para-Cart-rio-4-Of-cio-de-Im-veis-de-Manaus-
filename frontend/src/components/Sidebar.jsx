@@ -137,7 +137,7 @@ function Sidebar({ usuario, onLogout, onToggle }) {
                 margin: 0,
                 lineHeight: 1.2
               }}>
-                Cartório 1º Ofício
+                Sistema Cartorial
               </h1>
               <p style={{
                 fontSize: '0.875rem',

@@ -467,7 +467,7 @@ router.post('/analise-ia', authMiddleware, async (req, res) => {
     const k = kpis.rows[0];
     const taxaMes = k.criados_mes > 0 ? Math.round((k.concluidos_mes / k.criados_mes) * 100) : 0;
 
-    const prompt = `Você é um analista especializado em cartórios de registro de imóveis. Analise os dados abaixo do 1º Ofício de Registro de Imóveis de Manaus e gere um relatório gerencial em português, com linguagem profissional e objetiva.
+    const prompt = `Você é um analista especializado em cartórios de registro de imóveis. Analise os dados abaixo e gere um relatório gerencial em português, com linguagem profissional e objetiva.
 
 ## DADOS DO MÊS ATUAL (${new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })})
 
