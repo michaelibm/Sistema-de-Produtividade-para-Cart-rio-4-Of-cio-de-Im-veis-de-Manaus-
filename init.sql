@@ -88,6 +88,13 @@ CREATE TABLE IF NOT EXISTS public.protocolos
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     setor character varying(100) COLLATE pg_catalog."default",
+    tem_orcamento boolean DEFAULT false,
+    orcamento_valor numeric(10,2),
+    orcamento_pago boolean DEFAULT false,
+    prioridade character varying(20) COLLATE pg_catalog."default" DEFAULT 'normal',
+    nome_cliente character varying(255) COLLATE pg_catalog."default",
+    iniciado_em timestamp without time zone,
+    pausado_em timestamp without time zone,
     CONSTRAINT protocolos_pkey PRIMARY KEY (id),
     CONSTRAINT protocolos_numero_key UNIQUE (numero)
 );
