@@ -41,19 +41,24 @@ router.post('/', authMiddleware, supervisorOnly, async (req, res) => {
   try {
     const { nome, prazo, tipo_prazo, dias_alerta } = req.body;
 
-    if (!nome || !prazo || !tipo_prazo) {
-      return res.status(400).json({ message: 'Campos obrigatórios: nome, prazo e tipo_prazo' });
+    if (!nome || !tipo_prazo) {
+      return res.status(400).json({ message: 'Campos obrigatórios: nome e tipo_prazo' });
+    }
+
+    const semPrazo = tipo_prazo === 'sem_prazo';
+    if (!semPrazo && !prazo) {
+      return res.status(400).json({ message: 'Campo obrigatório: prazo' });
     }
 
     // Validar dias_alerta
-    const diasAlertaValue = dias_alerta || 3; // Padrão: 3 dias
-    if (diasAlertaValue < 1 || diasAlertaValue > 30) {
+    const diasAlertaValue = semPrazo ? null : (dias_alerta || 3); // Padrão: 3 dias
+    if (!semPrazo && (diasAlertaValue < 1 || diasAlertaValue > 30)) {
       return res.status(400).json({ message: 'Dias de alerta deve estar entre 1 e 30' });
     }
 
     const result = await pool.query(
       'INSERT INTO servicos (nome, prazo, tipo_prazo, dias_alerta) VALUES ($1, $2, $3, $4) RETURNING *',
-      [nome, prazo, tipo_prazo, diasAlertaValue]
+      [nome, semPrazo ? null : prazo, tipo_prazo, diasAlertaValue]
     );
 
     res.status(201).json(result.rows[0]);
@@ -69,14 +74,16 @@ router.put('/:id', authMiddleware, supervisorOnly, async (req, res) => {
     const { id } = req.params;
     const { nome, prazo, tipo_prazo, dias_alerta } = req.body;
 
+    const semPrazo = tipo_prazo === 'sem_prazo';
+
     // Validar dias_alerta se fornecido
-    if (dias_alerta !== undefined && (dias_alerta < 1 || dias_alerta > 30)) {
+    if (!semPrazo && dias_alerta !== undefined && (dias_alerta < 1 || dias_alerta > 30)) {
       return res.status(400).json({ message: 'Dias de alerta deve estar entre 1 e 30' });
     }
 
     const result = await pool.query(
       'UPDATE servicos SET nome = $1, prazo = $2, tipo_prazo = $3, dias_alerta = $4 WHERE id = $5 RETURNING *',
-      [nome, prazo, tipo_prazo, dias_alerta || 3, id]
+      [nome, semPrazo ? null : prazo, tipo_prazo, semPrazo ? null : (dias_alerta || 3), id]
     );
 
     if (result.rows.length === 0) {

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.protocolos
     servico_id integer,
     responsavel_id integer,
     data_entrada date NOT NULL,
-    data_vencimento date NOT NULL,
+    data_vencimento date,
     data_conclusao date,
     status character varying(20) COLLATE pg_catalog."default" DEFAULT 'andamento'::character varying,
     observacoes text COLLATE pg_catalog."default",
@@ -106,13 +106,14 @@ CREATE TABLE IF NOT EXISTS public.servicos
 (
     id serial NOT NULL,
     nome character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    prazo integer NOT NULL,
+    prazo integer,
     tipo_prazo character varying(20) COLLATE pg_catalog."default" NOT NULL,
     ativo boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     dias_alerta integer DEFAULT 3,
-    CONSTRAINT servicos_pkey PRIMARY KEY (id)
+    CONSTRAINT servicos_pkey PRIMARY KEY (id),
+    CONSTRAINT servicos_tipo_prazo_check CHECK (tipo_prazo IN ('uteis', 'corridos', 'sem_prazo'))
 );
 
 COMMENT ON COLUMN public.servicos.dias_alerta

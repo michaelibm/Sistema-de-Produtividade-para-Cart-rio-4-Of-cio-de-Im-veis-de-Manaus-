@@ -21,8 +21,8 @@ CREATE TABLE usuarios (
 CREATE TABLE servicos (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
-    prazo INTEGER NOT NULL,
-    tipo_prazo VARCHAR(20) NOT NULL CHECK (tipo_prazo IN ('uteis', 'corridos')),
+    prazo INTEGER,
+    tipo_prazo VARCHAR(20) NOT NULL CHECK (tipo_prazo IN ('uteis', 'corridos', 'sem_prazo')),
     ativo BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -35,7 +35,7 @@ CREATE TABLE protocolos (
     servico_id INTEGER REFERENCES servicos(id) ON DELETE RESTRICT,
     responsavel_id INTEGER REFERENCES usuarios(id) ON DELETE RESTRICT,
     data_entrada DATE NOT NULL,
-    data_vencimento DATE NOT NULL,
+    data_vencimento DATE,
     data_conclusao DATE,
     status VARCHAR(20) DEFAULT 'andamento' CHECK (status IN ('andamento', 'concluido', 'cancelado')),
     observacoes TEXT,

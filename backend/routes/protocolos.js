@@ -5,6 +5,8 @@ const { authMiddleware } = require('../middleware/auth');
 
 // Função para calcular data de vencimento considerando dias úteis
 async function calcularDataVencimento(dataEntrada, prazo, tipoPrazo) {
+  if (tipoPrazo === 'sem_prazo') return null;
+
   let data = new Date(dataEntrada);
   data.setHours(0, 0, 0, 0);
 
@@ -751,8 +753,9 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
       [id, servico_id, req.user.id]
     );
 
-    const dataVencimentoAtual = new Date(protocolo.data_vencimento);
-    let novaData = dataVencimentoAtual.toISOString().split('T')[0];
+    let novaData = protocolo.data_vencimento
+      ? new Date(protocolo.data_vencimento).toISOString().split('T')[0]
+      : null;
 
     if (renovarPrazo) {
       const hoje = new Date().toISOString().split('T')[0];
@@ -761,10 +764,16 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
         servico.prazo,
         servico.tipo_prazo
        );
-      const dataAtual = new Date(novaData);
-      const dataRecalculada = new Date(recalculada);
 
-      novaData = (dataRecalculada > dataAtual) ? recalculada : novaData;
+      if (recalculada === null || novaData === null) {
+        // Novo serviço sem prazo, ou protocolo ainda sem data de vencimento:
+        // adota o resultado do recálculo (que pode ser null, quando o serviço é "sem prazo").
+        novaData = recalculada;
+      } else {
+        const dataAtual = new Date(novaData);
+        const dataRecalculada = new Date(recalculada);
+        novaData = (dataRecalculada > dataAtual) ? recalculada : novaData;
+      }
       await client.query('UPDATE protocolos SET data_vencimento = $1 WHERE id = $2', [novaData, id]);
     }
 
@@ -775,8 +784,8 @@ router.post('/:id/adicionar-servico', authMiddleware, async (req, res) => {
         req.user.id,
         'ADICIONAR_SERVICO',
         renovarPrazo
-          ? `Serviço "${servico.nome}" adicionado com renovação de prazo. Novo vencimento: ${novaData}`
-          : `Serviço "${servico.nome}" adicionado mantendo prazo (${novaData})`,
+          ? `Serviço "${servico.nome}" adicionado com renovação de prazo. Novo vencimento: ${novaData || 'sem prazo definido'}`
+          : `Serviço "${servico.nome}" adicionado mantendo prazo (${novaData || 'sem prazo definido'})`,
       ]
     );
 

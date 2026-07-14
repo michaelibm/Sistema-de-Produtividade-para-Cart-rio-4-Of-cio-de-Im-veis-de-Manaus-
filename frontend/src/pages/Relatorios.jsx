@@ -407,7 +407,11 @@ function Relatorios({ usuario }) {
                       {porServico.map((s, i) => (
                         <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#1e293b' }}>{s.nome}</td>
-                          <td style={{ padding: '0.75rem 1rem' }}><Badge cor="azul">{s.prazo} {s.tipo_prazo === 'uteis' ? 'úteis' : 'corridos'}</Badge></td>
+                          <td style={{ padding: '0.75rem 1rem' }}>
+                            <Badge cor="azul">
+                              {s.tipo_prazo === 'sem_prazo' ? 'Sem prazo' : `${s.prazo} ${s.tipo_prazo === 'uteis' ? 'úteis' : 'corridos'}`}
+                            </Badge>
+                          </td>
                           <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#3b82f6' }}>{s.total_protocolos}</td>
                           <td style={{ padding: '0.75rem 1rem', color: '#f59e0b' }}>{s.em_andamento}</td>
                           <td style={{ padding: '0.75rem 1rem', color: '#10b981', fontWeight: 700 }}>{s.concluidos}</td>

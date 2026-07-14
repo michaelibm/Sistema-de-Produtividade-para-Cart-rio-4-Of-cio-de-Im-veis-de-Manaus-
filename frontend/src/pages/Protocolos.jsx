@@ -90,8 +90,15 @@ const PRIORIDADE_CONFIG = {
   3: { label: "Urgente", cor: "#dc2626", bg: "#fee2e2", emoji: "🔴" },
 };
 
+const prazoServicoLabel = (s) => {
+  if (!s) return "";
+  if (s.tipo_prazo === "sem_prazo") return "sem prazo definido";
+  return `${s.prazo} ${s.tipo_prazo === "uteis" ? "úteis" : "corridos"}`;
+};
+
 const corLinha = (p) => {
   if (["concluido","concluído","cancelado","concluido_parcial"].includes((p.status||"").toLowerCase())) return {};
+  if (!p.data_vencimento) return {};
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const venc = new Date(p.data_vencimento); venc.setHours(0, 0, 0, 0);
   const diff = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
@@ -1417,7 +1424,9 @@ export default function Protocolos({ usuario }) {
                     <td>{p.responsavel_nome}</td>
                     <td>{String(p.data_entrada).slice(0, 10)}</td>
                     <td>
-                      {(() => {
+                      {!p.data_vencimento ? (
+                        <span style={{ color: "#9ca3af" }}>Sem prazo</span>
+                      ) : (() => {
                         const hoje = new Date(); hoje.setHours(0,0,0,0);
                         const venc = new Date(p.data_vencimento); venc.setHours(0,0,0,0);
                         const diff = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
@@ -1607,8 +1616,7 @@ export default function Protocolos({ usuario }) {
                   <option value="">Selecione...</option>
                   {servicos.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.nome} ({s.prazo}{" "}
-                      {s.tipo_prazo === "uteis" ? "úteis" : "corridos"})
+                      {s.nome} ({prazoServicoLabel(s)})
                     </option>
                   ))}
                 </select>
@@ -1835,8 +1843,7 @@ export default function Protocolos({ usuario }) {
                   <option value="">Selecione...</option>
                   {servicos.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.nome} ({s.prazo}{" "}
-                      {s.tipo_prazo === "uteis" ? "úteis" : "corridos"})
+                      {s.nome} ({prazoServicoLabel(s)})
                     </option>
                   ))}
                 </select>
@@ -1846,10 +1853,9 @@ export default function Protocolos({ usuario }) {
                 <div className="info-box">
                   <strong>{servicoEscolhido.nome}</strong>
                   <br />
-                  Prazo: {servicoEscolhido.prazo}{" "}
-                  {servicoEscolhido.tipo_prazo === "uteis"
-                    ? "dias úteis"
-                    : "dias corridos"}
+                  {servicoEscolhido.tipo_prazo === "sem_prazo"
+                    ? "Sem prazo definido"
+                    : `Prazo: ${servicoEscolhido.prazo} dias ${servicoEscolhido.tipo_prazo === "uteis" ? "úteis" : "corridos"}`}
                 </div>
               )}
 
@@ -1875,7 +1881,7 @@ export default function Protocolos({ usuario }) {
 
               {servicoResp && (
                 <div className="alert alert-success">
-                  Serviço adicionado! Vencimento: {servicoResp.data_vencimento}
+                  Serviço adicionado! Vencimento: {servicoResp.data_vencimento || "sem prazo definido"}
                 </div>
               )}
 

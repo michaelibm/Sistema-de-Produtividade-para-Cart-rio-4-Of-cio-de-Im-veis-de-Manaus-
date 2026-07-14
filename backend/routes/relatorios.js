@@ -482,7 +482,7 @@ router.post('/analise-ia', authMiddleware, async (req, res) => {
 ${ranking.rows.map(r => `- ${r.nome}: ${r.concluidos} concluídos / ${r.total} total (${r.taxa_conclusao}%) | atrasados ativos: ${r.atrasados_ativos}`).join('\n')}
 
 **Serviços (top 10 por volume):**
-${servicos.rows.map(s => `- ${s.nome} (prazo: ${s.prazo} dias ${s.tipo_prazo}): ${s.total} total, ${s.em_andamento} em andamento, ${s.concluidos} concluídos, ${s.atrasados} atrasados`).join('\n')}
+${servicos.rows.map(s => `- ${s.nome} (${s.tipo_prazo === 'sem_prazo' ? 'sem prazo definido' : `prazo: ${s.prazo} dias ${s.tipo_prazo}`}): ${s.total} total, ${s.em_andamento} em andamento, ${s.concluidos} concluídos, ${s.atrasados} atrasados`).join('\n')}
 
 **Tendência últimos 4 meses:**
 ${tendencia.rows.map(t => `- ${t.mes}: ${t.criados} criados, ${t.concluidos} concluídos`).join('\n')}

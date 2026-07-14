@@ -174,10 +174,11 @@ function Dashboard() {
 
       // Helper: protocolo pertence ao período pelo vencimento ou entrada
       const noperiodo = (p) => {
-        const venc = new Date(p.data_vencimento);
         const entrada = new Date(p.data_entrada);
-        return (venc >= inicioMes && venc <= fimMes) ||
-               (entrada >= inicioMes && entrada <= fimMes);
+        if (entrada >= inicioMes && entrada <= fimMes) return true;
+        if (!p.data_vencimento) return false;
+        const venc = new Date(p.data_vencimento);
+        return venc >= inicioMes && venc <= fimMes;
       };
 
       // Se for o mês atual: mostra tudo em andamento (comportamento padrão)
@@ -204,6 +205,7 @@ function Dashboard() {
 
       const protocolosAtrasados = protocolosDoperiodo.filter(p => {
         if (p.status !== 'andamento') return false;
+        if (!p.data_vencimento) return false;
         const vencimento = new Date(p.data_vencimento);
         vencimento.setHours(0, 0, 0, 0);
         return vencimento < hoje;
@@ -211,6 +213,7 @@ function Dashboard() {
 
       const protocolosVencendo3 = protocolosDoperiodo.filter(p => {
         if (p.status !== 'andamento') return false;
+        if (!p.data_vencimento) return false;
         const vencimento = new Date(p.data_vencimento);
         vencimento.setHours(0, 0, 0, 0);
         const diff = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
@@ -219,6 +222,7 @@ function Dashboard() {
 
       const protocolosVencendo7 = protocolosDoperiodo.filter(p => {
         if (p.status !== 'andamento') return false;
+        if (!p.data_vencimento) return false;
         const vencimento = new Date(p.data_vencimento);
         vencimento.setHours(0, 0, 0, 0);
         const diff = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
@@ -282,6 +286,7 @@ function Dashboard() {
       (p.servico_nome && p.servico_nome.toLowerCase().includes(filtroBuscaTabela.toLowerCase())) ||
       (p.responsavel_nome && p.responsavel_nome.toLowerCase().includes(filtroBuscaTabela.toLowerCase()));
     let matchVenc = true;
+    if (filtroVencInicio || filtroVencFim) matchVenc = !!p.data_vencimento;
     if (filtroVencInicio) matchVenc = matchVenc && new Date(p.data_vencimento) >= new Date(filtroVencInicio);
     if (filtroVencFim) matchVenc = matchVenc && new Date(p.data_vencimento) <= new Date(filtroVencFim + 'T23:59:59');
     return matchStatus && matchBusca && matchVenc;

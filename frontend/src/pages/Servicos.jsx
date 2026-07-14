@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createServico, deleteServico, getServicos, updateServico } from '../services/api';
 
+const TIPO_PRAZO_LABEL = {
+  uteis: 'Dias Úteis',
+  corridos: 'Dias Corridos',
+  sem_prazo: 'Sem Prazo Definido',
+};
+
 function Servicos() {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,19 +68,23 @@ function Servicos() {
     setSaving(true);
     setErro('');
     try {
-      if (!form.nome || !form.prazo) {
-        throw new Error('Preencha nome e prazo');
-      }
+      const semPrazo = form.tipo_prazo === 'sem_prazo';
 
-      if (form.dias_alerta < 1 || form.dias_alerta > 30) {
+      if (!form.nome) {
+        throw new Error('Preencha o nome');
+      }
+      if (!semPrazo && !form.prazo) {
+        throw new Error('Preencha o prazo');
+      }
+      if (!semPrazo && (form.dias_alerta < 1 || form.dias_alerta > 30)) {
         throw new Error('Dias de alerta deve estar entre 1 e 30');
       }
 
       const dados = {
         nome: form.nome,
-        prazo: Number(form.prazo),
+        prazo: semPrazo ? null : Number(form.prazo),
         tipo_prazo: form.tipo_prazo,
-        dias_alerta: Number(form.dias_alerta),
+        dias_alerta: semPrazo ? null : Number(form.dias_alerta),
       };
 
       if (editId) {
@@ -145,16 +155,20 @@ function Servicos() {
                 {!loading && itens.map((s) => (
                   <tr key={s.id}>
                     <td><strong>{s.nome}</strong></td>
-                    <td>{s.prazo} dias</td>
+                    <td>{s.tipo_prazo === 'sem_prazo' ? '—' : `${s.prazo} dias`}</td>
                     <td>
                       <span className="status-badge info">
-                        {s.tipo_prazo === 'uteis' ? 'Úteis' : 'Corridos'}
+                        {TIPO_PRAZO_LABEL[s.tipo_prazo] || s.tipo_prazo}
                       </span>
                     </td>
                     <td>
-                      <span className="status-badge warning">
-                        {s.dias_alerta} {s.dias_alerta === 1 ? 'dia' : 'dias'} antes
-                      </span>
+                      {s.tipo_prazo === 'sem_prazo' ? (
+                        <span className="status-badge info">—</span>
+                      ) : (
+                        <span className="status-badge warning">
+                          {s.dias_alerta} {s.dias_alerta === 1 ? 'dia' : 'dias'} antes
+                        </span>
+                      )}
                     </td>
                     <td>
                       <div className="action-buttons">
@@ -194,20 +208,6 @@ function Servicos() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="prazo">Prazo (em dias)</label>
-                <input
-                  type="number"
-                  id="prazo"
-                  className="form-input"
-                  min="1"
-                  max="365"
-                  value={form.prazo}
-                  onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
                 <label htmlFor="tipo_prazo">Tipo de Prazo</label>
                 <select
                   id="tipo_prazo"
@@ -217,28 +217,53 @@ function Servicos() {
                 >
                   <option value="uteis">Dias Úteis</option>
                   <option value="corridos">Dias Corridos</option>
+                  <option value="sem_prazo">Sem Prazo Definido</option>
                 </select>
               </div>
 
-              {/* ✅ CAMPO NOVO: Dias de Alerta */}
-              <div className="form-group">
-                <label htmlFor="dias_alerta">🔔 Alertar com quantos dias de antecedência?</label>
-                <input
-                  type="number"
-                  id="dias_alerta"
-                  className="form-input"
-                  min="1"
-                  max="30"
-                  value={form.dias_alerta}
-                  onChange={(e) => setForm((f) => ({ ...f, dias_alerta: e.target.value }))}
-                  required
-                />
-                <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
-                  O sistema enviará alertas quando faltar essa quantidade de dias para o vencimento.
-                  <br />
-                  Exemplo: Se definir 3 dias, o alerta será enviado 3 dias antes do vencimento.
-                </small>
-              </div>
+              {form.tipo_prazo !== 'sem_prazo' && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="prazo">Prazo (em dias)</label>
+                    <input
+                      type="number"
+                      id="prazo"
+                      className="form-input"
+                      min="1"
+                      max="365"
+                      value={form.prazo}
+                      onChange={(e) => setForm((f) => ({ ...f, prazo: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  {/* ✅ CAMPO NOVO: Dias de Alerta */}
+                  <div className="form-group">
+                    <label htmlFor="dias_alerta">🔔 Alertar com quantos dias de antecedência?</label>
+                    <input
+                      type="number"
+                      id="dias_alerta"
+                      className="form-input"
+                      min="1"
+                      max="30"
+                      value={form.dias_alerta}
+                      onChange={(e) => setForm((f) => ({ ...f, dias_alerta: e.target.value }))}
+                      required
+                    />
+                    <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
+                      O sistema enviará alertas quando faltar essa quantidade de dias para o vencimento.
+                      <br />
+                      Exemplo: Se definir 3 dias, o alerta será enviado 3 dias antes do vencimento.
+                    </small>
+                  </div>
+                </>
+              )}
+
+              {form.tipo_prazo === 'sem_prazo' && (
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '0.75rem 1rem', fontSize: 13, color: '#1e40af', marginBottom: '1rem' }}>
+                  💡 Serviços sem prazo definido não geram data de vencimento nem alertas de atraso.
+                </div>
+              )}
 
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={saving}>
