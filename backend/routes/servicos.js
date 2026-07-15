@@ -4,10 +4,15 @@ const pool = require('../config/database');
 const { authMiddleware, supervisorOnly } = require('../middleware/auth');
 
 // Listar todos os serviços
+// ?atendimento=true retorna apenas os serviços marcados para aparecer no Balcão de Atendimento
 router.get('/', authMiddleware, async (req, res) => {
   try {
+    const somenteAtendimento = req.query.atendimento === 'true';
+    const where = somenteAtendimento
+      ? 'WHERE ativo = true AND visivel_atendimento = true'
+      : 'WHERE ativo = true';
     const result = await pool.query(
-      'SELECT id, nome, prazo, tipo_prazo, dias_alerta, ativo FROM servicos WHERE ativo = true ORDER BY nome'
+      `SELECT id, nome, prazo, tipo_prazo, dias_alerta, ativo, visivel_atendimento FROM servicos ${where} ORDER BY nome`
     );
     res.json(result.rows);
   } catch (error) {
@@ -39,7 +44,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Criar novo serviço (apenas supervisor)
 router.post('/', authMiddleware, supervisorOnly, async (req, res) => {
   try {
-    const { nome, prazo, tipo_prazo, dias_alerta } = req.body;
+    const { nome, prazo, tipo_prazo, dias_alerta, visivel_atendimento } = req.body;
 
     if (!nome || !tipo_prazo) {
       return res.status(400).json({ message: 'Campos obrigatórios: nome e tipo_prazo' });
@@ -57,8 +62,8 @@ router.post('/', authMiddleware, supervisorOnly, async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO servicos (nome, prazo, tipo_prazo, dias_alerta) VALUES ($1, $2, $3, $4) RETURNING *',
-      [nome, semPrazo ? null : prazo, tipo_prazo, diasAlertaValue]
+      'INSERT INTO servicos (nome, prazo, tipo_prazo, dias_alerta, visivel_atendimento) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [nome, semPrazo ? null : prazo, tipo_prazo, diasAlertaValue, visivel_atendimento !== false]
     );
 
     res.status(201).json(result.rows[0]);
@@ -72,7 +77,7 @@ router.post('/', authMiddleware, supervisorOnly, async (req, res) => {
 router.put('/:id', authMiddleware, supervisorOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, prazo, tipo_prazo, dias_alerta } = req.body;
+    const { nome, prazo, tipo_prazo, dias_alerta, visivel_atendimento } = req.body;
 
     const semPrazo = tipo_prazo === 'sem_prazo';
 
@@ -82,8 +87,8 @@ router.put('/:id', authMiddleware, supervisorOnly, async (req, res) => {
     }
 
     const result = await pool.query(
-      'UPDATE servicos SET nome = $1, prazo = $2, tipo_prazo = $3, dias_alerta = $4 WHERE id = $5 RETURNING *',
-      [nome, semPrazo ? null : prazo, tipo_prazo, semPrazo ? null : (dias_alerta || 3), id]
+      'UPDATE servicos SET nome = $1, prazo = $2, tipo_prazo = $3, dias_alerta = $4, visivel_atendimento = $5 WHERE id = $6 RETURNING *',
+      [nome, semPrazo ? null : prazo, tipo_prazo, semPrazo ? null : (dias_alerta || 3), visivel_atendimento !== false, id]
     );
 
     if (result.rows.length === 0) {

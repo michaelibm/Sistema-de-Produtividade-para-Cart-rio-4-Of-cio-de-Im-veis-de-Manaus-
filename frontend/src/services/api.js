@@ -165,8 +165,15 @@ export const getDashboardStats = async () => {
 };
 
 // SERVIÇOS
-export const getServicos = async () => {
-  const response = await fetch(`${API_URL}/servicos`, {
+export const getServicos = async (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(key, value);
+    }
+  });
+  const qs = params.toString();
+  const response = await fetch(`${API_URL}/servicos${qs ? `?${qs}` : ''}`, {
     headers: getAuthHeader(),
   });
   return handleResponse(response);

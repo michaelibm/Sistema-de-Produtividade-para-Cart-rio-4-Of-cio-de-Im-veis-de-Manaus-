@@ -31,7 +31,7 @@ export default function FilaAtendimento({ usuario }) {
     try {
       const token = localStorage.getItem("token");
       const [s, fila] = await Promise.all([
-        getServicos(),
+        getServicos({ atendimento: true }),
         fetch(`${API_URL}/protocolos?status=aguardando`, {
           headers: { Authorization: `Bearer ${token}` },
         }).then((r) => r.json()),

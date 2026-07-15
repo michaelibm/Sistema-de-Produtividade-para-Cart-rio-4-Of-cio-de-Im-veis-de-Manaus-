@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS public.servicos
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     dias_alerta integer DEFAULT 3,
+    visivel_atendimento boolean NOT NULL DEFAULT true,
     CONSTRAINT servicos_pkey PRIMARY KEY (id),
     CONSTRAINT servicos_tipo_prazo_check CHECK (tipo_prazo IN ('uteis', 'corridos', 'sem_prazo'))
 );

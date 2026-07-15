@@ -24,6 +24,7 @@ CREATE TABLE servicos (
     prazo INTEGER,
     tipo_prazo VARCHAR(20) NOT NULL CHECK (tipo_prazo IN ('uteis', 'corridos', 'sem_prazo')),
     ativo BOOLEAN DEFAULT true,
+    visivel_atendimento BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

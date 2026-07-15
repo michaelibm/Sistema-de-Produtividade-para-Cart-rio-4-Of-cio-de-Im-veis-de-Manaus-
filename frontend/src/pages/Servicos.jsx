@@ -21,6 +21,7 @@ function Servicos() {
     prazo: 5,
     tipo_prazo: 'uteis',
     dias_alerta: 3,
+    visivel_atendimento: true,
   });
 
   const carregar = async () => {
@@ -42,7 +43,7 @@ function Servicos() {
 
   const abrirNovo = () => {
     setEditId(null);
-    setForm({ nome: '', prazo: 5, tipo_prazo: 'uteis', dias_alerta: 3 });
+    setForm({ nome: '', prazo: 5, tipo_prazo: 'uteis', dias_alerta: 3, visivel_atendimento: true });
     setModalOpen(true);
   };
 
@@ -53,6 +54,7 @@ function Servicos() {
       prazo: s.prazo || 5,
       tipo_prazo: s.tipo_prazo || 'uteis',
       dias_alerta: s.dias_alerta || 3,
+      visivel_atendimento: s.visivel_atendimento !== false,
     });
     setModalOpen(true);
   };
@@ -85,6 +87,7 @@ function Servicos() {
         prazo: semPrazo ? null : Number(form.prazo),
         tipo_prazo: form.tipo_prazo,
         dias_alerta: semPrazo ? null : Number(form.dias_alerta),
+        visivel_atendimento: form.visivel_atendimento,
       };
 
       if (editId) {
@@ -142,15 +145,16 @@ function Servicos() {
                   <th>Prazo</th>
                   <th>Tipo</th>
                   <th>🔔 Alertar em</th>
+                  <th>🎫 Atendimento</th>
                   <th style={{ width: 220 }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
-                  <tr><td colSpan="5" style={{ textAlign: 'center' }}>Carregando...</td></tr>
+                  <tr><td colSpan="6" style={{ textAlign: 'center' }}>Carregando...</td></tr>
                 )}
                 {!loading && itens.length === 0 && (
-                  <tr><td colSpan="5" style={{ textAlign: 'center' }}>Nenhum serviço cadastrado.</td></tr>
+                  <tr><td colSpan="6" style={{ textAlign: 'center' }}>Nenhum serviço cadastrado.</td></tr>
                 )}
                 {!loading && itens.map((s) => (
                   <tr key={s.id}>
@@ -168,6 +172,13 @@ function Servicos() {
                         <span className="status-badge warning">
                           {s.dias_alerta} {s.dias_alerta === 1 ? 'dia' : 'dias'} antes
                         </span>
+                      )}
+                    </td>
+                    <td>
+                      {s.visivel_atendimento !== false ? (
+                        <span className="status-badge success">Visível</span>
+                      ) : (
+                        <span className="status-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>Oculto</span>
                       )}
                     </td>
                     <td>
@@ -264,6 +275,21 @@ function Servicos() {
                   💡 Serviços sem prazo definido não geram data de vencimento nem alertas de atraso.
                 </div>
               )}
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={form.visivel_atendimento}
+                    onChange={(e) => setForm((f) => ({ ...f, visivel_atendimento: e.target.checked }))}
+                  />{' '}
+                  🎫 Aparece no Balcão de Atendimento
+                </label>
+                <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
+                  Se desmarcado, esse serviço não aparecerá na lista de opções do Balcão de Atendimento —
+                  ainda pode ser usado normalmente pelos registradores.
+                </small>
+              </div>
 
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={saving}>
