@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { ORG_NAME } from '../config/branding';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -250,7 +251,7 @@ export default function Painel() {
             fontSize: 22,
           }}>📋</div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1.25rem', color: CORES.texto }}>Sistema Cartorial</div>
+            <div style={{ fontWeight: 800, fontSize: '1.25rem', color: CORES.texto }}>{ORG_NAME}</div>
             <div style={{ fontSize: 12, color: CORES.subtexto }}>Painel de Produtividade</div>
           </div>
         </div>

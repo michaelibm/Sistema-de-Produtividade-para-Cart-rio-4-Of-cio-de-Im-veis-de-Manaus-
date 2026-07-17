@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ORG_NAME, ORG_SUBTITLE } from '../config/branding';
 
 
 function Sidebar({ usuario, onLogout, onToggle }) {
@@ -129,14 +130,14 @@ function Sidebar({ usuario, onLogout, onToggle }) {
                 margin: 0,
                 lineHeight: 1.2
               }}>
-                Sistema Cartorial
+                {ORG_NAME}
               </h1>
               <p style={{
                 fontSize: '0.875rem',
                 color: '#64748b',
                 margin: 0
               }}>
-                Sistema de Produtividade
+                {ORG_SUBTITLE}
               </p>
             </div>
           )}
