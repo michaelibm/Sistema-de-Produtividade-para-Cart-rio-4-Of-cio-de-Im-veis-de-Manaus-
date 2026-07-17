@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { login } from '../services/api';
-import { ORG_NAME, ORG_SUBTITLE } from '../config/branding';
 
 const BARS = [
   { label: 'Jan', v: 62 }, { label: 'Fev', v: 78 }, { label: 'Mar', v: 55 },
@@ -346,8 +345,8 @@ function Login({ onLogin }) {
           <div className="login-brand">
             <div className="login-brand-icon">📋</div>
             <div>
-              <div className="login-brand-name">{ORG_NAME}</div>
-              <div className="login-brand-sub">{ORG_SUBTITLE}</div>
+              <div className="login-brand-name">Sistema Cartorial</div>
+              <div className="login-brand-sub">Gestão de Produtividade</div>
             </div>
           </div>
 
@@ -388,7 +387,7 @@ function Login({ onLogin }) {
           <div className="login-form-wrap">
 
             <div className="login-form-icon">📋</div>
-            <div className="login-form-title">Bem-vindo</div>
+            <div className="login-form-title">Bem-vindo Aguia 5.0</div>
             <div className="login-form-sub">Faça login para continuar</div>
 
             {erro && (

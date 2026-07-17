@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ORG_NAME, ORG_SUBTITLE } from '../config/branding';
 
 
 function Sidebar({ usuario, onLogout, onToggle }) {
@@ -100,47 +99,18 @@ function Sidebar({ usuario, onLogout, onToggle }) {
           alignItems: 'center',
           gap: '1rem',
           marginBottom: '0.5rem',
-          justifyContent: isCollapsed ? 'center' : 'flex-start'
+          justifyContent: 'center'
         }}>
-          {/* Ícone */}
-          <div style={{
-            width: isCollapsed ? '48px' : '52px',
-            height: isCollapsed ? '48px' : '52px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: isCollapsed ? '1.4rem' : '1.6rem',
-            flexShrink: 0,
-            transition: 'all 0.3s ease'
+          <h1 style={{
+            fontSize: isCollapsed ? '1rem' : '1.375rem',
+            fontWeight: '700',
+            color: '#1e293b',
+            margin: 0,
+            lineHeight: 1.2,
+            transition: 'font-size 0.3s ease'
           }}>
-            📋
-          </div>
-          
-          {!isCollapsed && (
-            <div style={{
-              opacity: isCollapsed ? 0 : 1,
-              transition: 'opacity 0.3s ease'
-            }}>
-              <h1 style={{
-                fontSize: '1.375rem',
-                fontWeight: '700',
-                color: '#1e293b',
-                margin: 0,
-                lineHeight: 1.2
-              }}>
-                {ORG_NAME}
-              </h1>
-              <p style={{
-                fontSize: '0.875rem',
-                color: '#64748b',
-                margin: 0
-              }}>
-                {ORG_SUBTITLE}
-              </p>
-            </div>
-          )}
+            {isCollapsed ? 'Á5' : 'Águia 5.0'}
+          </h1>
         </div>
       </div>
 
