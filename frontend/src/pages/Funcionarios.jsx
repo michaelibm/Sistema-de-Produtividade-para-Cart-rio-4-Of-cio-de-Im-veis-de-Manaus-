@@ -13,7 +13,7 @@ function Funcionarios() {
   const [form, setForm] = useState({
     nome: '',
     email: '',
-    cargo: 'Escrevente',
+    cargo: 'Coordenador',
     setor: '',
     senha: '',
   });
@@ -37,7 +37,7 @@ function Funcionarios() {
 
   const abrirNovo = () => {
     setEditId(null);
-    setForm({ nome: '', email: '', cargo: 'Escrevente', setor: '', senha: '' });
+    setForm({ nome: '', email: '', cargo: 'Coordenador', setor: '', senha: '' });
     setModalOpen(true);
   };
 
@@ -46,7 +46,7 @@ function Funcionarios() {
     setForm({ 
       nome: u.nome || '', 
       email: u.email || '', 
-      cargo: u.cargo || 'Escrevente', 
+      cargo: u.cargo || 'Coordenador',
       setor: u.setor || '',
       senha: '' 
     });
@@ -151,13 +151,11 @@ function Funcionarios() {
                     <td>{u.email}</td>
                     <td>
                       <span className={`status-badge ${
-                        u.cargo === 'Supervisor' ? 'info' : 
-                        u.cargo === 'Auxiliar' ? 'success' : 
-                        u.cargo === 'Escrevente' ? 'warning' : 'info'
+                        u.cargo === 'Supervisor' ? 'info' :
+                        u.cargo === 'Registrador' ? 'success' :
+                        u.cargo === 'Coordenador' ? 'warning' : 'info'
                       }`}>
-                        {u.cargo === 'Auxiliar' ? 'Registrador' : 
-                         u.cargo === 'Escrevente' ? 'Coordenador' : 
-                         u.cargo}
+                        {u.cargo}
                       </span>
                     </td>
                     <td>{u.setor || '-'}</td>
@@ -220,8 +218,8 @@ function Funcionarios() {
                   onChange={(e) => setForm((f) => ({ ...f, cargo: e.target.value }))}
                 >
                   <option value="Supervisor">Supervisor</option>
-                  <option value="Escrevente">Coordenador</option>
-                  <option value="Auxiliar">Registrador</option>
+                  <option value="Coordenador">Coordenador</option>
+                  <option value="Registrador">Registrador</option>
                   <option value="Atendente">Atendente</option>
                 </select>
               </div>
