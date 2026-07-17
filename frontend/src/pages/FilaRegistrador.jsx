@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { API_URL, getServicos } from "../services/api";
+import { API_URL, getServicos, getFuncionarios } from "../services/api";
 import "./Protocolos.css";
 
 const PRIORIDADE_CONFIG = {
@@ -19,6 +19,11 @@ export default function FilaRegistrador({ usuario }) {
   const [busca, setBusca] = useState("");
   const [servicos, setServicos] = useState([]);
   const [servicoEscolhido, setServicoEscolhido] = useState("");
+  const [registradores, setRegistradores] = useState([]);
+  const [modalDistribuir, setModalDistribuir] = useState(null);
+  const [registradorEscolhido, setRegistradorEscolhido] = useState("");
+  const [servicoDistribuido, setServicoDistribuido] = useState("");
+  const isSupervisor = usuario?.cargo === "Supervisor";
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -51,6 +56,16 @@ export default function FilaRegistrador({ usuario }) {
   useEffect(() => {
     getServicos().then((res) => setServicos(Array.isArray(res) ? res : [])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!isSupervisor) return;
+    getFuncionarios()
+      .then((res) => {
+        const ativos = Array.isArray(res) ? res.filter((f) => f.cargo === "Registrador" && f.ativo) : [];
+        setRegistradores(ativos);
+      })
+      .catch(() => {});
+  }, [isSupervisor]);
 
   const toggleSelecionado = (id) => {
     setSelecionados((prev) => {
@@ -101,6 +116,32 @@ export default function FilaRegistrador({ usuario }) {
       setTimeout(() => setSucesso(""), 7000);
     } else {
       setErro(`Erro ao puxar protocolo #${p.numero}`);
+    }
+    setIniciando(false);
+  };
+
+  const distribuirUm = async (p) => {
+    setIniciando(true);
+    setErro(""); setSucesso("");
+    const token = localStorage.getItem("token");
+    const resp = await fetch(`${API_URL}/protocolos/${p.id}/transferir`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        novo_responsavel_id: Number(registradorEscolhido),
+        puxar_fila: true,
+        ...(servicoDistribuido ? { servico_id: Number(servicoDistribuido) } : {}),
+      }),
+    });
+    setModalDistribuir(null);
+    setRegistradorEscolhido("");
+    setServicoDistribuido("");
+    await carregar();
+    if (resp.ok) {
+      setSucesso(`✅ Protocolo #${p.numero} distribuído!`);
+      setTimeout(() => setSucesso(""), 7000);
+    } else {
+      setErro(`Erro ao distribuir protocolo #${p.numero}`);
     }
     setIniciando(false);
   };
@@ -193,7 +234,9 @@ export default function FilaRegistrador({ usuario }) {
                 {oficiais.map((p) => (
                   <CardProtocolo key={p.id} p={p} selecionado={selecionados.has(p.id)}
                     onToggle={() => toggleSelecionado(p.id)}
-                    onPuxar={() => { setServicoEscolhido(""); setModalConfirm(p); }} />
+                    onPuxar={() => { setServicoEscolhido(""); setModalConfirm(p); }}
+                    isSupervisor={isSupervisor}
+                    onDistribuir={() => { setRegistradorEscolhido(""); setServicoDistribuido(""); setModalDistribuir(p); }} />
                 ))}
               </div>
             </div>
@@ -210,7 +253,9 @@ export default function FilaRegistrador({ usuario }) {
                 {demais.map((p) => (
                   <CardProtocolo key={p.id} p={p} selecionado={selecionados.has(p.id)}
                     onToggle={() => toggleSelecionado(p.id)}
-                    onPuxar={() => { setServicoEscolhido(""); setModalConfirm(p); }} />
+                    onPuxar={() => { setServicoEscolhido(""); setModalConfirm(p); }}
+                    isSupervisor={isSupervisor}
+                    onDistribuir={() => { setRegistradorEscolhido(""); setServicoDistribuido(""); setModalDistribuir(p); }} />
                 ))}
               </div>
             </div>
@@ -273,11 +318,66 @@ export default function FilaRegistrador({ usuario }) {
           </div>
         </div>
       )}
+
+      {/* Modal distribuição (Supervisor) */}
+      {modalDistribuir && (
+        <div className="modal-overlay" onClick={() => setModalDistribuir(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+              <span style={{ fontSize: "3rem" }}>👥</span>
+            </div>
+            <h2 style={{ textAlign: "center", marginBottom: "0.5rem" }}>Distribuir Protocolo</h2>
+            <p style={{ textAlign: "center", color: "#64748b", fontSize: 14, marginBottom: "1.25rem" }}>
+              Protocolo <strong>#{modalDistribuir.numero}</strong>
+              {modalDistribuir.nome_cliente && <> — <strong>{modalDistribuir.nome_cliente}</strong></>}
+            </p>
+
+            <div className="form-group">
+              <label htmlFor="registrador-distribuir">Alocar para *</label>
+              <select
+                id="registrador-distribuir"
+                className="form-select"
+                value={registradorEscolhido}
+                onChange={(e) => setRegistradorEscolhido(e.target.value)}
+              >
+                <option value="">Selecione o registrador...</option>
+                {registradores.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="servico-distribuir">Serviço que ele irá realizar *</label>
+              <select
+                id="servico-distribuir"
+                className="form-select"
+                value={servicoDistribuido}
+                onChange={(e) => setServicoDistribuido(e.target.value)}
+              >
+                <option value="">Selecione o serviço...</option>
+                {servicos.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setModalDistribuir(null)}>Cancelar</button>
+              <button className="btn btn-primary"
+                onClick={() => distribuirUm(modalDistribuir)}
+                disabled={iniciando || !registradorEscolhido || !servicoDistribuido}>
+                {iniciando ? "⏳ Distribuindo..." : "✅ Confirmar Distribuição"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function CardProtocolo({ p, selecionado, onToggle, onPuxar }) {
+function CardProtocolo({ p, selecionado, onToggle, onPuxar, onDistribuir, isSupervisor }) {
   const cfg = PRIORIDADE_CONFIG[p.prioridade] || PRIORIDADE_CONFIG[2];
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const entrada = new Date(p.data_entrada); entrada.setHours(0, 0, 0, 0);
@@ -325,11 +425,20 @@ function CardProtocolo({ p, selecionado, onToggle, onPuxar }) {
         )}
       </div>
 
-      <button className="btn btn-primary"
-        style={{ whiteSpace: "nowrap", fontSize: 13, background: "linear-gradient(135deg,#f59e0b,#d97706)", flexShrink: 0 }}
-        onClick={(e) => { e.stopPropagation(); onPuxar(); }}>
-        📥 Puxar
-      </button>
+      <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+        {isSupervisor && (
+          <button className="btn btn-secondary"
+            style={{ whiteSpace: "nowrap", fontSize: 13 }}
+            onClick={(e) => { e.stopPropagation(); onDistribuir(); }}>
+            👥 Distribuir
+          </button>
+        )}
+        <button className="btn btn-primary"
+          style={{ whiteSpace: "nowrap", fontSize: 13, background: "linear-gradient(135deg,#f59e0b,#d97706)" }}
+          onClick={(e) => { e.stopPropagation(); onPuxar(); }}>
+          📥 Puxar
+        </button>
+      </div>
     </div>
   );
 }
